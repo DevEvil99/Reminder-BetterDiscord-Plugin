@@ -7,6 +7,7 @@
  * @invite jsQ9UP7kCA
  * @authorId 468132563714703390
  * @donate https://oxapay.com/donate/76037572
+ * @source https://github.com/DevEvil99/Reminder-BetterDiscord-Plugin
  */
 
 const { BdApi } = window;
@@ -247,7 +248,7 @@ module.exports = class CustomReminders {
 
   updateDiscordIcon() {
     if (this.reminderCount > 0) {
-      document.title = `(${this.reminderCount}) Reminder`; 
+      document.title = `(${this.reminderCount}) Reminder(s)`; 
     } else {
       document.title = "Discord"; 
     }
