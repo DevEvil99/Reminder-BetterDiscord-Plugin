@@ -27,3 +27,9 @@ Enjoy a user-friendly interface designed for seamless interaction.
 
 ![image](https://github.com/user-attachments/assets/5193286e-db98-42a4-951f-93270756f406)
 
+## Links
+- [All of my themes](https://betterdiscord.app/developer/DevEvil)
+- [Website](https://devevil.com)
+- [Support](https://dsc.gg/devevil)
+
+Made with 💜 by @devevil/DevEvil#8745
