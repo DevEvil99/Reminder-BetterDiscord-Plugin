@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/a80e14fc-8668-4cdb-9e8b-cf7644d7d51f)# Reminder
+# Reminder
 A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
 
 ## Features
