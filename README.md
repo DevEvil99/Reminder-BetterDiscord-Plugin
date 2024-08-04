@@ -1,4 +1,4 @@
-# Reminder
+![image](https://github.com/user-attachments/assets/a80e14fc-8668-4cdb-9e8b-cf7644d7d51f)# Reminder
 A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
 
 ## Features
@@ -28,6 +28,7 @@ Enjoy a user-friendly interface designed for seamless interaction.
 ![image](https://github.com/user-attachments/assets/5193286e-db98-42a4-951f-93270756f406)
 
 ## Links
+- [Download](https://betterdiscord.app/plugin/Reminder)
 - [All of my themes](https://betterdiscord.app/developer/DevEvil)
 - [Website](https://devevil.com)
 - [Support](https://dsc.gg/devevil)
