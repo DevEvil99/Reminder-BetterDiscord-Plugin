@@ -39,7 +39,7 @@ module.exports = class CustomReminders {
   showModal(reminder) {
     this.audio.play(); 
     this.reminderCount++; 
-    this.updateDiscordIcon();
+    this.updateDiscordTitle();
 
     BdApi.showConfirmationModal(
       "Reminder",
@@ -48,7 +48,7 @@ module.exports = class CustomReminders {
         confirmText: "OK",
         onConfirm: () => {
           this.reminderCount = 0; 
-          this.updateDiscordIcon();
+          this.updateDiscordTitle();
         },
       }
     );
@@ -246,7 +246,7 @@ module.exports = class CustomReminders {
     );
   }
 
-  updateDiscordIcon() {
+  updateDiscordTitle() {
     if (this.reminderCount > 0) {
       document.title = `(${this.reminderCount}) Reminder(s)`; 
     } else {
