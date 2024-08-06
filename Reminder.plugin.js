@@ -20,7 +20,7 @@ const config = {
             name: "DevEvil",
             discord_id: "468132563714703390",
             github_username: "DevEvil99"
-        }, ],
+        }],
         website: "https://devevil.com",
         github: "https://github.com/DevEvil99/Reminder-BetterDiscord-Plugin",
         github_raw: "https://raw.githubusercontent.com/DevEvil99/Reminder-BetterDiscord-Plugin/main/Reminder.plugin.js",
@@ -29,16 +29,29 @@ const config = {
     changelog: [{
         title: "Version 1.0",
         type: "fixed",
-        items: ["Fixed some bugs", "Added Plugin Library Check", "Improved some things"]
+        items: ["Fixed some bugs", "Added Plugin Library Check", "Improved some things", "Added settings panel"]
     }]
 };
 
 class Reminder {
     constructor() {
+        this.defaultSettings = {
+            notificationSound: true,
+            reminderInterval: 1000
+        };
+        this.settings = this.loadSettings();
         this.reminders = this.loadReminders();
         this.checkInterval = null;
         this.audio = new Audio('https://www.myinstants.com/media/sounds/discord-notification.mp3');
         this.reminderCount = 0;
+    }
+
+    loadSettings() {
+        return BdApi.loadData("Reminder", "settings") || this.defaultSettings;
+    }
+
+    saveSettings() {
+        BdApi.saveData("Reminder", "settings", this.settings);
     }
 
     loadReminders() {
@@ -58,7 +71,9 @@ class Reminder {
     }
 
     showModal(reminder) {
-        this.audio.play();
+        if (this.settings.notificationSound) {
+            this.audio.play();
+        }
         this.reminderCount++;
         this.updateDiscordTitle();
 
@@ -77,7 +92,7 @@ class Reminder {
     start() {
         this.checkReminders();
         this.addReminderButton();
-        this.checkInterval = setInterval(() => this.checkReminders(), 1000);
+        this.checkInterval = setInterval(() => this.checkReminders(), this.settings.reminderInterval);
         BdApi.Patcher.after("Reminder", BdApi.Webpack.getModule(m => m.default && m.default.displayName === "Inbox"), "default", (_, __, ret) => {
             const Inbox = ret.props.children[1];
             const original = Inbox.type;
@@ -93,6 +108,12 @@ class Reminder {
     stop() {
         BdApi.Patcher.unpatchAll("Reminder");
         clearInterval(this.checkInterval);
+        const reminderButton = document.querySelector(".panels_a4d4d9 > div > button");
+        if (reminderButton) {
+            reminderButton.parentElement.remove();
+        }
+        this.reminderCount = 0;
+        this.updateDiscordTitle();
     }
 
     addReminderButton() {
@@ -122,9 +143,7 @@ class Reminder {
     }
 
     openReminderModal() {
-        const {
-            React
-        } = BdApi;
+        const { React } = BdApi;
         const ModalContent = () => {
             const [reminderText, setReminderText] = React.useState("");
             const [reminderTime, setReminderTime] = React.useState("");
@@ -238,9 +257,7 @@ class Reminder {
     }
 
     showAllReminders() {
-        const {
-            React
-        } = BdApi;
+        const { React } = BdApi;
         const ReminderList = () => {
             return React.createElement("div", null,
                 this.reminders.length === 0 ?
@@ -312,9 +329,7 @@ class Reminder {
     }
 
     showChangelog() {
-        const {
-            React
-        } = BdApi;
+        const { React } = BdApi;
         const Changelog = () => {
             return React.createElement("div", null,
                 config.changelog.map(change =>
@@ -359,6 +374,69 @@ class Reminder {
             this.showChangelog();
             BdApi.saveData("Reminder", "lastVersion", config.info.version);
         }
+    }
+
+    getSettingsPanel() {
+        const { React } = BdApi;
+        const Panel = () => {
+            const [notificationSound, setNotificationSound] = React.useState(this.settings.notificationSound);
+            const [reminderInterval, setReminderInterval] = React.useState(this.settings.reminderInterval);
+
+            return React.createElement("div", {
+                style: {
+                    padding: "10px"
+                }
+            },
+                React.createElement("div", {
+                    style: {
+                        marginBottom: "10px"
+                    },
+                    className: 'labelRow_ed1d57'
+                },
+                    React.createElement("label", { className: "title_ed1d57" }, "Notification Sound:"),
+                    React.createElement("input", {
+                        type: "checkbox",
+                        checked: notificationSound,
+                        onChange: (e) => {
+                            setNotificationSound(e.target.checked);
+                            this.settings.notificationSound = e.target.checked;
+                            this.saveSettings();
+                        },
+                        className: "container_cebd1c"
+                    })
+                ),
+                React.createElement("div", {
+                    style: {
+                        marginBottom: "10px"
+                    },
+                    className: 'control_ed1d57'
+                },
+                    React.createElement("label", { className: "title_ed1d57" }, "Reminder Interval (ms):"),
+                    React.createElement("p", { className: "colorStandard_d1aa77 size14_e8b2ab description_b89ec7 formText_b89ec7 modeDefault_b89ec7", style: { margin: "3px 0 10px 0"} }, "This setting controls how often (in milliseconds) the plugin checks for upcoming reminders. A shorter interval ensures more timely notifications but may use more system resources."),
+                    React.createElement("input", {
+                        type: "number",
+                        value: reminderInterval,
+                        onChange: (e) => {
+                            setReminderInterval(Number(e.target.value));
+                            this.settings.reminderInterval = Number(e.target.value);
+                            this.saveSettings();
+                        },
+                        style: {
+                            background: "var(--bg-overlay-3, var(--channeltextarea-background))",
+                            outline: "none",
+                            border: "none",
+                            padding: "10px",
+                            borderRadius: "10px",
+                            width: "100%",
+                            color: "var(--text-normal)",
+                        },
+                        
+                    })
+                )
+            );
+        };
+
+        return React.createElement(Panel);
     }
 }
 
