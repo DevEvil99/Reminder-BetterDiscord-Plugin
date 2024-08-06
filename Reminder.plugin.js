@@ -132,6 +132,7 @@ class Reminder {
         button.style.width = "100%";
         button.style.color = "var(--text-normal)";
         button.style.cursor = "pointer";
+        button.className = "reminder-button";
         button.onclick = () => this.openReminderModal();
 
         containerDiv.appendChild(button);
