@@ -6,7 +6,7 @@
  * @website https://devevil.com
  * @invite jsQ9UP7kCA
  * @authorId 468132563714703390
- * @donate https://oxapay.com/donate/76037572
+ * @donate https://devevil.com/dnt
  * @source https://github.com/DevEvil99/Reminder-BetterDiscord-Plugin
  * @updateUrl https://raw.githubusercontent.com/DevEvil99/Reminder-BetterDiscord-Plugin/main/Reminder.plugin.js
  */
