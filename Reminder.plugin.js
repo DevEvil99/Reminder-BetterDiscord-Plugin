@@ -1,12 +1,12 @@
 /**
  * @name Reminder
- * @version 1.0
+ * @version 1.1
  * @description A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
  * @author DevEvil
  * @website https://devevil.com
  * @invite jsQ9UP7kCA
  * @authorId 468132563714703390
- * @donate https://devevil.com/dnt
+ * @donate https://oxapay.com/donate/76037572
  * @source https://github.com/DevEvil99/Reminder-BetterDiscord-Plugin
  * @updateUrl https://raw.githubusercontent.com/DevEvil99/Reminder-BetterDiscord-Plugin/main/Reminder.plugin.js
  */
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.0",
+        version: "1.1",
         description: "A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.",
         authors: [{
             name: "DevEvil",
@@ -27,17 +27,17 @@ const config = {
         invite: "jsQ9UP7kCA",
     },
     changelog: [{
-        title: "Version 1.0",
-        type: "fixed",
-        items: ["Fixed some bugs", "Added Plugin Library Check", "Improved some things", "Added settings panel"]
-    }]
+        title: "Version 1.1",
+        type: "improved",
+        items: ["Plugin is released!", "Updated the default reminder interval from 1 second to 1 minute."]
+    }]    
 };
 
 class Reminder {
     constructor() {
         this.defaultSettings = {
             notificationSound: true,
-            reminderInterval: 1000
+            reminderInterval: 60000 
         };
         this.settings = this.loadSettings();
         this.reminders = this.loadReminders();
@@ -45,6 +45,7 @@ class Reminder {
         this.audio = new Audio('https://www.myinstants.com/media/sounds/discord-notification.mp3');
         this.reminderCount = 0;
     }
+
 
     loadSettings() {
         return BdApi.loadData("Reminder", "settings") || this.defaultSettings;
@@ -90,6 +91,10 @@ class Reminder {
     }
 
     start() {
+        if (!BdApi.loadData("Reminder", "settings")) {
+            BdApi.saveData("Reminder", "settings", this.defaultSettings);
+        }
+
         this.checkReminders();
         this.addReminderButton();
         this.checkInterval = setInterval(() => this.checkReminders(), this.settings.reminderInterval);
@@ -413,7 +418,7 @@ class Reminder {
                     className: 'control_ed1d57'
                 },
                     React.createElement("label", { className: "title_ed1d57" }, "Reminder Interval (ms):"),
-                    React.createElement("p", { className: "colorStandard_d1aa77 size14_e8b2ab description_b89ec7 formText_b89ec7 modeDefault_b89ec7", style: { margin: "3px 0 10px 0"} }, "This setting controls how often (in milliseconds) the plugin checks for upcoming reminders. A shorter interval ensures more timely notifications but may use more system resources."),
+                    React.createElement("p", { className: "colorStandard_d1aa77 size14_e8b2ab description_b89ec7 formText_b89ec7 modeDefault_b89ec7", style: { margin: "3px 0 10px 0"} }, "This setting controls how often (in milliseconds) the plugin checks for upcoming reminders. The default interval is 1 minute (60000 milliseconds). Shorter intervals provide more frequent checks but may use more system resources."),
                     React.createElement("input", {
                         type: "number",
                         value: reminderInterval,
