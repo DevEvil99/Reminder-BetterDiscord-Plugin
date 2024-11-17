@@ -20,7 +20,7 @@ Access all your reminders in one convenient place. The plugin integrates a dedic
 
 ![image](https://github.com/user-attachments/assets/5193286e-db98-42a4-951f-93270756f406)
 
-### 6. **User-Friendly Interface**
+### 4. **User-Friendly Interface**
 Enjoy a user-friendly interface designed for seamless interaction.
 
 ![image](https://github.com/user-attachments/assets/7ccb7d0c-c0f4-4d2e-af37-8007dc01b1aa)
