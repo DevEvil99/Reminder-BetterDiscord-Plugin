@@ -6,7 +6,7 @@ If you found any bugs please report it in my [discord server.](https://dsc.gg/de
 ## Features
 
 ### 1. **Create Custom Reminders**
-Easily set reminders with custom text and specific times. You can quickly add a reminder for any occasion, ensuring you never miss important events like birthdays or meetings.
+Easily set reminders with custom text and specific times. You can quickly add a reminder for any occasion, ensuring you never miss important events.
 
 ![image](https://github.com/user-attachments/assets/83c1767f-4b6b-4cc0-a985-0d6aca5e869f)
 
