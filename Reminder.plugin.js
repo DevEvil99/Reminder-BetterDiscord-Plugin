@@ -1,12 +1,12 @@
 /**
  * @name Reminder
- * @version 1.1
+ * @version 1.2
  * @description A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
  * @author DevEvil
  * @website https://devevil.com
  * @invite jsQ9UP7kCA
  * @authorId 468132563714703390
- * @donate https://oxapay.com/donate/76037572
+ * @donate https://devevil.com/dnt
  * @source https://github.com/DevEvil99/Reminder-BetterDiscord-Plugin
  * @updateUrl https://raw.githubusercontent.com/DevEvil99/Reminder-BetterDiscord-Plugin/main/Reminder.plugin.js
  */
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.1",
+        version: "1.2",
         description: "A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.",
         authors: [{
             name: "DevEvil",
@@ -27,22 +27,27 @@ const config = {
         invite: "jsQ9UP7kCA",
     },
     changelog: [{
-        title: "Version 1.1",
-        type: "improved",
-        items: ["Plugin is released!", "Updated the default reminder interval from 1 second to 1 minute."]
-    }]    
+        title: "Version 1.2",
+        type: "added",
+        items: [
+            "Added support for custom notification sounds. Users can now input a URL to use their preferred sound for reminders.",
+            "Implemented a title and description for reminder text and time inputs, providing better guidance for users.",
+            "Implemented an icon next to the reminder button as a 'Help' button. Clicking it displays a modal with a step-by-step guide on how to use the plugin and add reminders."
+        ]
+    }]
 };
 
 class Reminder {
     constructor() {
         this.defaultSettings = {
             notificationSound: true,
-            reminderInterval: 60000 
+            notificationSoundURL: "https://www.myinstants.com/media/sounds/discord-notification.mp3",
+            reminderInterval: 60000
         };
         this.settings = this.loadSettings();
         this.reminders = this.loadReminders();
         this.checkInterval = null;
-        this.audio = new Audio('https://www.myinstants.com/media/sounds/discord-notification.mp3');
+        this.audio = new Audio(this.settings.notificationSoundURL);
         this.reminderCount = 0;
     }
 
@@ -53,6 +58,17 @@ class Reminder {
 
     saveSettings() {
         BdApi.saveData("Reminder", "settings", this.settings);
+    }
+
+    playNotificationSound() {
+        if (this.settings.notificationSound) {
+            try {
+                this.audio.src = this.settings.notificationSoundURL || this.defaultSettings.notificationSoundURL;
+                this.audio.play();
+            } catch (e) {
+                console.error("Error playing notification sound:", e);
+            }
+        }
     }
 
     loadReminders() {
@@ -72,9 +88,7 @@ class Reminder {
     }
 
     showModal(reminder) {
-        if (this.settings.notificationSound) {
-            this.audio.play();
-        }
+        this.playNotificationSound();
         this.reminderCount++;
         this.updateDiscordTitle();
 
@@ -124,8 +138,10 @@ class Reminder {
     addReminderButton() {
         const containerDiv = document.createElement("div");
         containerDiv.style.display = "flex";
-        containerDiv.style.justifyContent = "center";
+        containerDiv.style.justifyContent = "space-between";
+        containerDiv.style.alignItems = "center";
         containerDiv.style.margin = "10px";
+
 
         const button = document.createElement("button");
         button.textContent = "Add Reminder";
@@ -140,7 +156,18 @@ class Reminder {
         button.className = "reminder-button";
         button.onclick = () => this.openReminderModal();
 
+
+        const helpIcon = document.createElement("div");
+        helpIcon.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--__lottieIconColor,var(--interactive-normal))" width="24" height="24" style="cursor: pointer;">
+            <path d="M6 2a2 2 0 0 0-2 2v15a3 3 0 0 0 3 3h12a1 1 0 1 0 0-2h-2v-2h2a1 1 0 0 0 1-1V4a2 2 0 0 0-2-2h-8v16h5v2H7a1 1 0 1 1 0-2h1V2H6Z"/>
+        </svg>`;
+        helpIcon.style.margin = "0 8px"
+        helpIcon.onclick = () => this.openHelpModal();
+        helpIcon.title = "How to Add a Reminder";
+
         containerDiv.appendChild(button);
+        containerDiv.appendChild(helpIcon);
 
         const panel = document.querySelector(".panels_a4d4d9");
         if (panel) {
@@ -148,47 +175,123 @@ class Reminder {
         }
     }
 
+    openHelpModal() {
+        const {
+            React
+        } = BdApi;
+
+        const HelpContent = () => {
+            return React.createElement("div", null,
+                React.createElement("h4", {
+                    style: {
+                        color: "var(--header-primary)",
+                        marginBottom: "10px"
+                    }
+                }, "How to Add a Reminder"),
+                React.createElement("ul", {
+                        style: {
+                            color: "var(--text-normal)",
+                            marginLeft: "20px",
+                            listStyle: "circle"
+                        }
+                    },
+                    React.createElement("li", null, "Click the 'Add Reminder' button."),
+                    React.createElement("li", null, "Enter a brief description in the 'Reminder Text' field."),
+                    React.createElement("li", null, "Set the time for your reminder using the 'Reminder Time' field."),
+                    React.createElement("li", null, "Click 'Add' to save the reminder."),
+                    React.createElement("li", null, "Your reminder will alert you at the specified time!")
+                )
+            );
+        };
+
+        BdApi.showConfirmationModal(
+            "Reminder Guide",
+            React.createElement(HelpContent), {
+                confirmText: "Close",
+            }
+        );
+    }
+
     openReminderModal() {
-        const { React } = BdApi;
+        const {
+            React
+        } = BdApi;
         const ModalContent = () => {
             const [reminderText, setReminderText] = React.useState("");
             const [reminderTime, setReminderTime] = React.useState("");
 
             return React.createElement("div", null,
-                React.createElement("input", {
-                    type: "text",
-                    id: "reminderText",
-                    placeholder: "Reminder text",
-                    value: reminderText,
-                    onChange: (e) => setReminderText(e.target.value),
-                    required: true,
-                    style: {
-                        background: "var(--bg-overlay-3, var(--channeltextarea-background))",
-                        outline: "none",
-                        border: "none",
-                        padding: "10px",
-                        borderRadius: "10px",
-                        width: "95%",
-                        color: "var(--text-normal)",
-                        margin: "10px 0",
-                    }
-                }),
-                React.createElement("input", {
-                    type: "time",
-                    id: "reminderTime",
-                    value: reminderTime,
-                    onChange: (e) => setReminderTime(e.target.value),
-                    required: true,
-                    style: {
-                        background: "var(--bg-overlay-3, var(--channeltextarea-background))",
-                        outline: "none",
-                        border: "none",
-                        padding: "10px",
-                        borderRadius: "10px",
-                        width: "95%",
-                        color: "var(--text-normal)",
-                    }
-                }),
+                React.createElement("div", {
+                        style: {
+                            marginBottom: "15px"
+                        }
+                    },
+                    React.createElement("h4", {
+                        style: {
+                            color: "var(--header-primary)",
+                            marginBottom: "5px"
+                        }
+                    }, "Reminder Text"),
+                    React.createElement("p", {
+                        style: {
+                            color: "var(--header-primary)",
+                            marginBottom: "5px",
+                            fontSize: "12px"
+                        }
+                    }, "Enter a short description of your reminder (e.g., 'Call friend', 'Message @devevil at 6 PM')."),
+                    React.createElement("input", {
+                        type: "text",
+                        id: "reminderText",
+                        placeholder: "Reminder text",
+                        value: reminderText,
+                        onChange: (e) => setReminderText(e.target.value),
+                        required: true,
+                        style: {
+                            background: "var(--bg-overlay-3, var(--channeltextarea-background))",
+                            outline: "none",
+                            border: "none",
+                            padding: "10px",
+                            borderRadius: "10px",
+                            width: "95%",
+                            color: "var(--header-primary)",
+                        }
+                    })
+                ),
+                React.createElement("div", {
+                        style: {
+                            marginBottom: "15px"
+                        }
+                    },
+                    React.createElement("h4", {
+                        style: {
+                            color: "var(--header-primary)",
+                            marginBottom: "5px"
+                        }
+                    }, "Reminder Time"),
+                    React.createElement("p", {
+                        style: {
+                            color: "var(--header-primary)",
+                            marginBottom: "5px",
+                            fontSize: "12px"
+                        }
+                    }, "Select the time for the reminder by clicking on the clock icon."),
+                    React.createElement("input", {
+                        type: "time",
+                        id: "reminderTime",
+                        value: reminderTime,
+                        onChange: (e) => setReminderTime(e.target.value),
+                        required: true,
+                        style: {
+                            background: "var(--bg-overlay-3, var(--channeltextarea-background))",
+                            outline: "none",
+                            border: "none",
+                            padding: "10px",
+                            borderRadius: "10px",
+                            width: "95%",
+                            color: "var(--header-primary)",
+                        }
+                    })
+                ),
                 React.createElement("button", {
                     style: {
                         background: "var(--bg-overlay-3, var(--channeltextarea-background))",
@@ -197,7 +300,7 @@ class Reminder {
                         borderRadius: "10px",
                         color: "var(--text-normal)",
                         cursor: "pointer",
-                        marginTop: "10px",
+                        marginTop: "10px"
                     },
                     onClick: () => this.showAllReminders()
                 }, "View/Manage All Reminders")
@@ -207,7 +310,7 @@ class Reminder {
         BdApi.showConfirmationModal(
             "Add Reminder",
             React.createElement(ModalContent), {
-                confirmText: "Add",
+                confirmText: "Add Reminder",
                 onConfirm: () => {
                     const reminderText = document.getElementById("reminderText").value;
                     const reminderTime = document.getElementById("reminderTime").value;
@@ -225,15 +328,19 @@ class Reminder {
                         }
 
                         this.addReminder(reminderText, currentDate);
+                        BdApi.showToast(`Your reminder has been set and will alert you at the specified time.`, {
+                            type: "success",
+                        });
+                    } else {
+                        BdApi.showToast("Please fill out both fields before adding a reminder.", {
+                            type: "error",
+                        });
                     }
-
-                    BdApi.showToast(`Your reminder has been set and will alert you at the specified time.`, {
-                        type: "success",
-                    });
                 },
             }
         );
     }
+
 
     addReminder(text, time) {
         const reminder = {
@@ -263,7 +370,9 @@ class Reminder {
     }
 
     showAllReminders() {
-        const { React } = BdApi;
+        const {
+            React
+        } = BdApi;
         const ReminderList = () => {
             return React.createElement("div", null,
                 this.reminders.length === 0 ?
@@ -335,27 +444,47 @@ class Reminder {
     }
 
     showChangelog() {
-        const { React } = BdApi;
+        const {
+            React
+        } = BdApi;
+
         const Changelog = () => {
-            return React.createElement("div", null,
+            return React.createElement("div", {
+                    style: {
+                        maxWidth: "600px",
+                        margin: "0 auto",
+                        textAlign: "left",
+                        color: "var(--text-normal)",
+                        lineHeight: "1.5"
+                    }
+                },
                 config.changelog.map(change =>
                     React.createElement("div", {
                             key: change.title,
                             style: {
-                                marginBottom: "10px"
+                                marginBottom: "20px",
+                                borderBottom: "1px solid var(--background-modifier-accent)",
+                                paddingBottom: "10px"
                             }
                         },
                         React.createElement("h3", {
                             style: {
-                                color: "var(--text-normal)"
+                                color: "var(--header-secondary)",
+                                fontSize: "16px",
+                                marginBottom: "10px"
                             }
-                        }, change.title),
-                        React.createElement("ul", null,
+                        }, `${change.type === "added" ? "🆕 " : "🛠️ "}${change.title}`),
+                        React.createElement("ul", {
+                                style: {
+                                    paddingLeft: "20px",
+                                    listStyle: "disc"
+                                }
+                            },
                             change.items.map(item =>
                                 React.createElement("li", {
                                     key: item,
                                     style: {
-                                        color: "var(--text-normal)"
+                                        marginBottom: "5px"
                                     }
                                 }, item)
                             )
@@ -368,11 +497,13 @@ class Reminder {
         BdApi.showConfirmationModal(
             "Changelog",
             React.createElement(Changelog), {
-                confirmText: "Close",
-                onConfirm: () => {},
+                confirmText: "Got it!",
+                cancelText: null,
+                onConfirm: () => {}
             }
         );
     }
+
 
     showChangelogIfNeeded() {
         const lastVersion = BdApi.loadData("Reminder", "lastVersion");
@@ -383,23 +514,28 @@ class Reminder {
     }
 
     getSettingsPanel() {
-        const { React } = BdApi;
+        const {
+            React
+        } = BdApi;
         const Panel = () => {
             const [notificationSound, setNotificationSound] = React.useState(this.settings.notificationSound);
+            const [notificationSoundURL, setNotificationSoundURL] = React.useState(this.settings.notificationSoundURL);
             const [reminderInterval, setReminderInterval] = React.useState(this.settings.reminderInterval);
 
             return React.createElement("div", {
-                style: {
-                    padding: "10px"
-                }
-            },
-                React.createElement("div", {
                     style: {
-                        marginBottom: "10px"
-                    },
-                    className: 'labelRow_ed1d57'
+                        padding: "10px"
+                    }
                 },
-                    React.createElement("label", { className: "title_ed1d57" }, "Notification Sound:"),
+                React.createElement("div", {
+                        style: {
+                            marginBottom: "10px"
+                        },
+                        className: 'labelRow_ed1d57'
+                    },
+                    React.createElement("label", {
+                        className: "title_ed1d57"
+                    }, "Notification Sound:"),
                     React.createElement("input", {
                         type: "checkbox",
                         checked: notificationSound,
@@ -412,13 +548,54 @@ class Reminder {
                     })
                 ),
                 React.createElement("div", {
-                    style: {
-                        marginBottom: "10px"
+                        style: {
+                            margin: "15px 0"
+                        }
                     },
-                    className: 'control_ed1d57'
-                },
-                    React.createElement("label", { className: "title_ed1d57" }, "Reminder Interval (ms):"),
-                    React.createElement("p", { className: "colorStandard_d1aa77 size14_e8b2ab description_b89ec7 formText_b89ec7 modeDefault_b89ec7", style: { margin: "3px 0 10px 0"} }, "This setting controls how often (in milliseconds) the plugin checks for upcoming reminders. The default interval is 1 minute (60000 milliseconds). Shorter intervals provide more frequent checks but may use more system resources."),
+                    React.createElement("label", {
+                        className: "title_ed1d57"
+                    }, "Notification Sound MP3 URL:"),
+                    React.createElement("p", {
+                        className: "colorStandard_d1aa77 size14_e8b2ab description_b89ec7 formText_b89ec7 modeDefault_b89ec7",
+                        style: {
+                            margin: "3px 0 10px 0"
+                        }
+                    }, "Example: https://www.myinstants.com/media/sounds/discord-notification.mp3"),
+                    React.createElement("input", {
+                        type: "text",
+                        value: notificationSoundURL,
+                        placeholder: "Enter custom sound URL",
+                        onChange: (e) => {
+                            setNotificationSoundURL(e.target.value);
+                            this.settings.notificationSoundURL = e.target.value;
+                            this.saveSettings();
+                        },
+                        style: {
+                            background: "var(--bg-overlay-3, var(--channeltextarea-background))",
+                            outline: "none",
+                            border: "none",
+                            padding: "10px",
+                            borderRadius: "10px",
+                            width: "100%",
+                            color: "var(--text-normal)",
+                        },
+                    })
+                ),
+                React.createElement("div", {
+                        style: {
+                            marginBottom: "10px"
+                        },
+                        className: 'control_ed1d57'
+                    },
+                    React.createElement("label", {
+                        className: "title_ed1d57"
+                    }, "Reminder Interval (ms):"),
+                    React.createElement("p", {
+                        className: "colorStandard_d1aa77 size14_e8b2ab description_b89ec7 formText_b89ec7 modeDefault_b89ec7",
+                        style: {
+                            margin: "3px 0 10px 0"
+                        }
+                    }, "This setting controls how often (in milliseconds) the plugin checks for upcoming reminders. The default interval is 1 minute (60000 milliseconds). Shorter intervals provide more frequent checks but may use more system resources."),
                     React.createElement("input", {
                         type: "number",
                         value: reminderInterval,
@@ -436,7 +613,6 @@ class Reminder {
                             width: "100%",
                             color: "var(--text-normal)",
                         },
-                        
                     })
                 )
             );
