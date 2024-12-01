@@ -32,7 +32,7 @@ const config = {
         items: [
             "Added support for custom notification sounds. Users can now input a URL to use their preferred sound for reminders.",
             "Implemented a title and description for reminder text and time inputs, providing better guidance for users.",
-            "Implemented an icon next to the reminder button as a 'Help' button. Clicking it displays a modal with a step-by-step guide on how to use the plugin and add reminders."
+            "Implemented an icon inside the 'Add Reminder' modal as a 'Help' button. Clicking it displays a modal with a step-by-step guide on how to use the plugin and add reminders."
         ]
     }]
 };
@@ -156,18 +156,8 @@ class Reminder {
         button.className = "reminder-button";
         button.onclick = () => this.openReminderModal();
 
-
-        const helpIcon = document.createElement("div");
-        helpIcon.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--__lottieIconColor,var(--interactive-normal))" width="24" height="24" style="cursor: pointer;">
-            <path d="M6 2a2 2 0 0 0-2 2v15a3 3 0 0 0 3 3h12a1 1 0 1 0 0-2h-2v-2h2a1 1 0 0 0 1-1V4a2 2 0 0 0-2-2h-8v16h5v2H7a1 1 0 1 1 0-2h1V2H6Z"/>
-        </svg>`;
-        helpIcon.style.margin = "0 8px"
-        helpIcon.onclick = () => this.openHelpModal();
-        helpIcon.title = "How to Add a Reminder";
-
         containerDiv.appendChild(button);
-        containerDiv.appendChild(helpIcon);
+
 
         const panel = document.querySelector(".panels_a4d4d9");
         if (panel) {
@@ -219,8 +209,30 @@ class Reminder {
         const ModalContent = () => {
             const [reminderText, setReminderText] = React.useState("");
             const [reminderTime, setReminderTime] = React.useState("");
-
-            return React.createElement("div", null,
+    
+            return React.createElement("div", {
+                    style: {
+                        position: "relative" 
+                    }
+                },
+                React.createElement("svg", {
+                    xmlns: "http://www.w3.org/2000/svg",
+                    viewBox: "0 0 24 24",
+                    width: "24",
+                    height: "24",
+                    fill: "var(--__lottieIconColor,var(--interactive-normal))",
+                    style: {
+                        position: "absolute",
+                        bottom: "0",
+                        right: "0",
+                        cursor: "pointer"
+                    },
+                    title: "How to Add a Reminder",
+                    onClick: () => this.openHelpModal()
+                },
+                React.createElement("path", {
+                    d: "M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm9.008-3.018a1.502 1.502 0 0 1 2.522 1.159v.024a1.44 1.44 0 0 1-1.493 1.418 1 1 0 0 0-1.037.999V14a1 1 0 1 0 2 0v-.539a3.44 3.44 0 0 0 2.529-3.256 3.502 3.502 0 0 0-7-.255 1 1 0 0 0 2 .076c.014-.398.187-.774.48-1.044Zm.982 7.026a1 1 0 1 0 0 2H12a1 1 0 1 0 0-2h-.01Z"
+                })),
                 React.createElement("div", {
                         style: {
                             marginBottom: "15px"
@@ -306,7 +318,7 @@ class Reminder {
                 }, "View/Manage All Reminders")
             );
         };
-
+    
         BdApi.showConfirmationModal(
             "Add Reminder",
             React.createElement(ModalContent), {
@@ -314,7 +326,7 @@ class Reminder {
                 onConfirm: () => {
                     const reminderText = document.getElementById("reminderText").value;
                     const reminderTime = document.getElementById("reminderTime").value;
-
+    
                     if (reminderText && reminderTime) {
                         const currentDate = new Date();
                         const [hours, minutes] = reminderTime.split(":");
@@ -322,11 +334,11 @@ class Reminder {
                         currentDate.setMinutes(minutes);
                         currentDate.setSeconds(0);
                         currentDate.setMilliseconds(0);
-
+    
                         if (currentDate.getTime() < Date.now()) {
                             currentDate.setDate(currentDate.getDate() + 1);
                         }
-
+    
                         this.addReminder(reminderText, currentDate);
                         BdApi.showToast(`Your reminder has been set and will alert you at the specified time.`, {
                             type: "success",
@@ -340,6 +352,7 @@ class Reminder {
             }
         );
     }
+    
 
 
     addReminder(text, time) {
