@@ -1,6 +1,6 @@
 /**
  * @name Reminder
- * @version 1.2
+ * @version 1.2.1
  * @description A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
  * @author DevEvil
  * @website https://devevil.com
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.2",
+        version: "1.2.1",
         description: "A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.",
         authors: [{
             name: "DevEvil",
@@ -27,12 +27,13 @@ const config = {
         invite: "jsQ9UP7kCA",
     },
     changelog: [{
-        title: "Version 1.2",
+        title: "Version 1.2.1",
         type: "added",
         items: [
             "Added support for custom notification sounds. Users can now input a URL to use their preferred sound for reminders.",
             "Implemented a title and description for reminder text and time inputs, providing better guidance for users.",
-            "Implemented an icon inside the 'Add Reminder' modal as a 'Help' button. Clicking it displays a modal with a step-by-step guide on how to use the plugin and add reminders."
+            "Implemented an icon inside the 'Add Reminder' modal as a 'Help' button. Clicking it displays a modal with a step-by-step guide on how to use the plugin and add reminders.",
+            "Changed the notification sound's host"
         ]
     }]
 };
@@ -41,7 +42,7 @@ class Reminder {
     constructor() {
         this.defaultSettings = {
             notificationSound: true,
-            notificationSoundURL: "https://www.myinstants.com/media/sounds/discord-notification.mp3",
+            notificationSoundURL: "https://devevil99.github.io/devevil/files/Discord-Notification.mp3",
             reminderInterval: 60000
         };
         this.settings = this.loadSettings();
@@ -188,7 +189,7 @@ class Reminder {
                     React.createElement("li", null, "Click the 'Add Reminder' button."),
                     React.createElement("li", null, "Enter a brief description in the 'Reminder Text' field."),
                     React.createElement("li", null, "Set the time for your reminder using the 'Reminder Time' field."),
-                    React.createElement("li", null, "Click 'Add' to save the reminder."),
+                    React.createElement("li", null, "Click 'Add Reminder' to save the reminder."),
                     React.createElement("li", null, "Your reminder will alert you at the specified time!")
                 )
             );
