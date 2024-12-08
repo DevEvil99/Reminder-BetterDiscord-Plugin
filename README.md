@@ -28,9 +28,9 @@ Never miss an important notification again! This feature repeats your reminders 
 ### 5. User-Friendly Interface
 Enjoy a user-friendly interface designed for seamless interaction.
 
-![image](https://github.com/user-attachments/assets/b5676ea6-bf86-4236-9f2d-ae6f51222354)
+![image](https://github.com/user-attachments/assets/9cc85a15-0d48-4ece-8aa6-fcb79586aa96)
 
-![image](https://github.com/user-attachments/assets/c376c879-66f3-40ca-955e-f678ec66c2c9)
+![image](https://github.com/user-attachments/assets/b5676ea6-bf86-4236-9f2d-ae6f51222354)
 
 ![image](https://github.com/user-attachments/assets/9d7e5037-90c5-43fd-b6ef-560503296bb3)
 
