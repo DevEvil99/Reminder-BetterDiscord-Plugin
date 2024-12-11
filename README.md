@@ -25,7 +25,12 @@ Never miss an important notification again! This feature repeats your reminders 
 
 ![image](https://github.com/user-attachments/assets/d51117d4-1541-4d1b-aa19-d0fd93bf54c9)
 
-### 5. User-Friendly Interface
+### 5. Custom Notification Sound
+Enhance your notification experience. Select custom sounds for reminders and stay alerted in your own style.
+
+![image](https://github.com/user-attachments/assets/9d7e5037-90c5-43fd-b6ef-560503296bb3)
+
+### 6. User-Friendly Interface
 Enjoy a user-friendly interface designed for seamless interaction.
 
 ![image](https://github.com/user-attachments/assets/9cc85a15-0d48-4ece-8aa6-fcb79586aa96)
