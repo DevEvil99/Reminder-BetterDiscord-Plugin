@@ -1,6 +1,6 @@
 /**
  * @name Reminder
- * @version 1.3
+ * @version 1.3.1
  * @description A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
  * @author DevEvil
  * @website https://devevil.com
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.3",
+        version: "1.3.1",
         description: "A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.",
         authors: [{
             name: "DevEvil",
@@ -27,12 +27,10 @@ const config = {
         invite: "jsQ9UP7kCA",
     },
     changelog: [{
-        title: "Version 1.3",
-        type: "added",
+        title: "Mini Update - Version 1.3.1",
+        type: "improved",
         items: [
-            "🆕 Repeatable Reminder: This feature repeats your reminders up to 3 times at 5-minute intervals, ensuring you're alerted even if you miss the initial prompt. (Suggested by @wyfygamer)",
-            "🛠️ Updated the Notification Sound setting: replaced the checkbox with Discord's default toggle switch.",
-            "✨ If you want to see your suggestion get added next, join the support server and share your ideas with me."
+            "Removed the conditional check for ZeresPluginLibrary."
         ]
     }]
 };
@@ -740,51 +738,12 @@ class Reminder {
     }
 }
 
-module.exports = !global.ZeresPluginLibrary ?
-    class {
-        constructor() {
-            this._config = config;
-        }
+module.exports = class extends Reminder {
+    constructor() {
+        super();
+    }
 
-        getName() {
-            return config.info.name;
-        }
-
-        getAuthor() {
-            return config.info.author;
-        }
-
-        getVersion() {
-            return config.info.version;
-        }
-
-        getDescription() {
-            return config.info.description;
-        }
-
-        load() {
-            BdApi.showConfirmationModal("Library Missing", `The library plugin needed for **${config.info.name}** is missing. Please click Download Now to install it.`, {
-                confirmText: "Download Now",
-                cancelText: "Cancel",
-                onConfirm: () => {
-                    require("request").get("https://zerebos.github.io/BDPluginLibrary/release/0PluginLibrary.plugin.js", async (error, response, body) => {
-                        if (error) return require("electron").shell.openExternal("https://betterdiscord.app/Download?id=9");
-                        await new Promise((r) => require("fs").writeFile(require("path").join(BdApi.Plugins.folder, "0PluginLibrary.plugin.js"), body, r));
-                    });
-                },
-            });
-        }
-
-        start() {}
-
-        stop() {}
-    } :
-    class extends Reminder {
-        constructor() {
-            super();
-        }
-
-        load() {
-            this.showChangelogIfNeeded();
-        }
-    };
+    load() {
+        this.showChangelogIfNeeded();
+    }
+};
