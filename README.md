@@ -26,7 +26,7 @@ Never miss an important notification again! This feature repeats your reminders 
 ![image](https://github.com/user-attachments/assets/d51117d4-1541-4d1b-aa19-d0fd93bf54c9)
 
 ### 5. Custom Notification Sound
-Enhance your notification experience. Select custom sounds for reminders and stay alerted in your own style.
+Enhance your notification experience. Use custom sounds for reminders and stay alerted in your own style.
 
 ![image](https://github.com/user-attachments/assets/9d7e5037-90c5-43fd-b6ef-560503296bb3)
 
