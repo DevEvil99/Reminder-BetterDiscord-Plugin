@@ -1,9 +1,9 @@
-# Reminder
+# Reminder ⏰
 A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
 
-If you find any bugs or have suggestions, please report them on my [Discord server.](https://dsc.gg/devevil)
+💡 If you find any bugs or have suggestions, please report them on my [Discord server.](https://dsc.gg/devevil) 💡
 
-## Features
+## Features ✨
 
 ### 1. Create Custom Reminders
 Easily set reminders with custom text and specific times. You can quickly add a reminder for any occasion, ensuring you never miss important events.
@@ -41,7 +41,7 @@ Enjoy a user-friendly interface designed for seamless interaction.
 
 ![image](https://github.com/user-attachments/assets/5193286e-db98-42a4-951f-93270756f406)
 
-## Links
+## Links 🔗
 - [Download](https://betterdiscord.app/plugin/Reminder)
 - [All of my themes](https://betterdiscord.app/developer/DevEvil)
 - [Website](https://devevil.com)
