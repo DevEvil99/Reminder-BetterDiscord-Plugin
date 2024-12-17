@@ -5,7 +5,7 @@ A BetterDiscord plugin that allows users to create, view, and manage custom remi
 
 ## Features ✨
 
-### 1. Create Custom Reminders ⌚
+### 1. Create Custom Reminders ⏲️
 Easily set reminders with custom text and specific times. You can quickly add a reminder for any occasion, ensuring you never miss important events.
 
 ![image](https://github.com/user-attachments/assets/9fee7b46-4a3a-4ec6-950b-27577109825a)
