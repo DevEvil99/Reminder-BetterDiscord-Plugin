@@ -30,17 +30,6 @@ Enhance your notification experience. Use custom sounds for reminders and stay a
 
 ![image](https://github.com/user-attachments/assets/9d7e5037-90c5-43fd-b6ef-560503296bb3)
 
-### 6. User-Friendly Interface 🛠️
-Enjoy a user-friendly interface designed for seamless interaction.
-
-![image](https://github.com/user-attachments/assets/9cc85a15-0d48-4ece-8aa6-fcb79586aa96)
-
-![image](https://github.com/user-attachments/assets/b5676ea6-bf86-4236-9f2d-ae6f51222354)
-
-![image](https://github.com/user-attachments/assets/9d7e5037-90c5-43fd-b6ef-560503296bb3)
-
-![image](https://github.com/user-attachments/assets/5193286e-db98-42a4-951f-93270756f406)
-
 ## Links 🔗
 - [Download](https://betterdiscord.app/plugin/Reminder)
 - [All of my themes](https://betterdiscord.app/developer/DevEvil)
