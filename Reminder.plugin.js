@@ -1,6 +1,6 @@
 /**
  * @name Reminder
- * @version 1.3.1
+ * @version 1.3.2
  * @description A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
  * @author DevEvil
  * @website https://devevil.com
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.3.1",
+        version: "1.3.2",
         description: "A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.",
         authors: [{
             name: "DevEvil",
@@ -27,10 +27,11 @@ const config = {
         invite: "jsQ9UP7kCA",
     },
     changelog: [{
-        title: "Mini Update - Version 1.3.1",
+        title: "Mini Update - Version 1.3.2",
         type: "improved",
         items: [
-            "Removed the conditional check for ZeresPluginLibrary."
+            "Improved the style of the reminder inbox.",
+            "✨ If you want to see your suggestion get added next, join the support server and share your ideas with me."
         ]
     }]
 };
@@ -481,38 +482,65 @@ class Reminder {
     }
 
     showAllReminders() {
-        const {
-            React
-        } = BdApi;
+        const { React } = BdApi;
         const ReminderList = () => {
-            return React.createElement("div", null,
+            return React.createElement("div", {
+                    style: {
+                        padding: "5px"
+                    }
+                },
                 this.reminders.length === 0 ?
                 React.createElement("p", {
                     style: {
-                        color: "var(--text-normal)"
+                        color: "var(--text-muted)",
+                        fontSize: "16px",
+                        textAlign: "center",
+                        margin: "10px 0"
                     }
                 }, "No reminders set.") :
                 this.reminders.map(reminder =>
                     React.createElement("div", {
                             key: reminder.time,
                             style: {
-                                color: "var(--text-normal)",
                                 display: "flex",
                                 justifyContent: "space-between",
                                 alignItems: "center",
-                                margin: "5px 0"
-                            }
+                                padding: "10px",
+                                margin: "10px 0",
+                                backgroundColor: "var(--background-tertiary)",
+                                borderRadius: "8px",
+                                transition: "background-color 0.3s",
+                                boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)"
+                            },
+                            onMouseEnter: (e) => e.currentTarget.style.backgroundColor = "var(--background-secondary)",
+                            onMouseLeave: (e) => e.currentTarget.style.backgroundColor = "var(--background-tertiary)"
                         },
-                        `${reminder.text} - ${new Date(reminder.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+                        React.createElement("span", {
+                            style: {
+                                color: "var(--text-normal)",
+                                fontSize: "14px",
+                                fontWeight: "500",
+                                flexGrow: "1"
+                            }
+                        }, `${reminder.text} - ${new Date(reminder.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`),
                         React.createElement("button", {
                             style: {
-                                background: "var(--bg-overlay-3, var(--channeltextarea-background))",
-                                border: "none",
-                                padding: "5px",
+                                background: "var(--button-secondary-background)",
+                                border: "1px solid var(--button-secondary-border)",
+                                padding: "5px 10px",
                                 borderRadius: "5px",
                                 color: "var(--text-normal)",
                                 cursor: "pointer",
-                                marginLeft: "10px"
+                                transition: "background-color 0.3s, color 0.3s",
+                                fontSize: "14px"
+                            },
+                            onMouseEnter: (e) => {
+                                e.target.style.backgroundColor = "var(--button-danger-background)";
+                                e.target.style.color = "var(--text-on-danger)";
+                            },
+                            onMouseLeave: (e) => {
+                                e.target.style.backgroundColor = "var(--button-secondary-background)";
+                                e.target.style.color = "var(--text-normal)";
                             },
                             onClick: () => this.deleteReminder(reminder)
                         }, "Delete")
@@ -520,15 +548,16 @@ class Reminder {
                 )
             );
         };
-
+    
         BdApi.showConfirmationModal(
-            "All Reminders",
+            "Reminder Inbox",
             React.createElement(ReminderList), {
                 confirmText: "Close",
                 onConfirm: () => {},
             }
         );
     }
+    
 
     updateDiscordTitle() {
         if (this.reminderCount > 0) {
