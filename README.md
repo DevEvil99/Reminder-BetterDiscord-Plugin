@@ -21,7 +21,7 @@ Access all your reminders in one convenient place. The plugin integrates a dedic
 ![image](https://github.com/user-attachments/assets/5193286e-db98-42a4-951f-93270756f406)
 
 ### 4. Repeatable Reminder 🔁
-Never miss an important notification again! This feature repeats your reminders up to 3 times at 5-minute intervals, ensuring you're alerted even if you miss the initial prompt.
+This feature repeats your reminders up to 3 times at 5-minute intervals, ensuring you're alerted even if you miss the initial prompt.
 
 ![image](https://github.com/user-attachments/assets/d51117d4-1541-4d1b-aa19-d0fd93bf54c9)
 
