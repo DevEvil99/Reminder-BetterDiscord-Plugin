@@ -18,7 +18,7 @@ Receive instant notifications when a reminder is due. The plugin plays a notific
 ### 3. Reminder Inbox 📥
 Access all your reminders in one convenient place. The plugin integrates a dedicated reminder inbox within Discord, where you can view all your upcoming reminders at a glance.
 
-![image](https://github.com/user-attachments/assets/5193286e-db98-42a4-951f-93270756f406)
+![image](https://cdn.discordapp.com/attachments/826008987342340107/1319407441720377445/1FD5709E-7F11-4FC7-8188-B53E4A17DF52.png?ex=6767d3af&is=6766822f&hm=695e6705162169838e61aac8faa6af3a56b5acd82f6892414e6c6ceb1adcb0eb&)
 
 ### 4. Repeatable Reminder 🔁
 This feature repeats your reminders up to 3 times at 5-minute intervals, ensuring you're alerted even if you miss the initial prompt.
