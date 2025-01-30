@@ -653,117 +653,54 @@ class Reminder {
     }
 
     getSettingsPanel() {
-        const {
-            React
-        } = BdApi;
-
-        const Common = BdApi.Webpack.getModule(m => m.FormSwitch) || {
-            FormSwitch: (props) => React.createElement("input", {
-                type: "checkbox",
-                checked: props.value,
-                onChange: (e) => props.onChange(e.target.checked),
-                style: {
-                    marginRight: "10px"
-                }
-            })
-        };
-
-
-        const Panel = () => {
-            const [notificationSound, setNotificationSound] = React.useState(this.settings.notificationSound);
-            const [notificationSoundURL, setNotificationSoundURL] = React.useState(this.settings.notificationSoundURL);
-            const [reminderInterval, setReminderInterval] = React.useState(this.settings.reminderInterval);
-
-            return React.createElement("div", {
-                    style: {
-                        padding: "10px"
+        return BdApi.UI.buildSettingsPanel({
+            settings: [
+                {
+                    type: "switch",
+                    id: "notificationSound",
+                    name: "Notification Sound",
+                    note: "Enable or disable the notification sound.",
+                    value: this.settings.notificationSound,
+                    onChange: (value) => {
+                        this.settings.notificationSound = value;
+                        this.saveSettings();
                     }
                 },
-                React.createElement("div", null,
-                    React.createElement(Common.FormSwitch, {
-                        children: "Notification Sound",
-                        note: "Enable or disable the notification sound.",
-                        value: notificationSound,
-                        onChange: (v) => {
-                            setNotificationSound(v);
-                            this.settings.notificationSound = v;
-                            this.saveSettings();
-                        }
-                    })
-                ),
-                React.createElement("div", {
-                        style: {
-                            margin: "15px 0"
-                        }
-                    },
-                    React.createElement("label", {
-                        className: "title_ed1d57"
-                    }, "Notification Sound MP3 URL:"),
-                    React.createElement("p", {
-                        className: "colorStandard_d1aa77 size14_e8b2ab description_b89ec7 formText_b89ec7 modeDefault_b89ec7",
-                        style: {
-                            margin: "3px 0 10px 0"
-                        }
-                    }, "Example: https://www.myinstants.com/media/sounds/discord-notification.mp3"),
-                    React.createElement("input", {
-                        type: "text",
-                        value: notificationSoundURL,
-                        placeholder: "Enter custom sound URL",
-                        onChange: (e) => {
-                            setNotificationSoundURL(e.target.value);
-                            this.settings.notificationSoundURL = e.target.value;
-                            this.saveSettings();
-                        },
-                        style: {
-                            background: "var(--bg-overlay-3, var(--channeltextarea-background))",
-                            outline: "none",
-                            border: "none",
-                            padding: "10px",
-                            borderRadius: "10px",
-                            width: "100%",
-                            color: "var(--text-normal)",
-                        },
-                    })
-                ),
-                React.createElement("div", {
-                        style: {
-                            marginBottom: "10px"
-                        },
-                        className: 'control_ed1d57'
-                    },
-                    React.createElement("label", {
-                        className: "title_ed1d57"
-                    }, "Reminder Interval (ms):"),
-                    React.createElement("p", {
-                        className: "colorStandard_d1aa77 size14_e8b2ab description_b89ec7 formText_b89ec7 modeDefault_b89ec7",
-                        style: {
-                            margin: "3px 0 10px 0"
-                        }
-                    }, "This setting controls how often (in milliseconds) the plugin checks for upcoming reminders. The default interval is 1 minute (60000 milliseconds). Shorter intervals provide more frequent checks but may use more system resources."),
-                    React.createElement("input", {
-                        type: "number",
-                        value: reminderInterval,
-                        onChange: (e) => {
-                            setReminderInterval(Number(e.target.value));
-                            this.settings.reminderInterval = Number(e.target.value);
-                            this.saveSettings();
-                        },
-                        style: {
-                            background: "var(--bg-overlay-3, var(--channeltextarea-background))",
-                            outline: "none",
-                            border: "none",
-                            padding: "10px",
-                            borderRadius: "10px",
-                            width: "100%",
-                            color: "var(--text-normal)",
-                        },
-                    })
-                )
-            );
-        };
-
-        return React.createElement(Panel);
+                {
+                    type: "text",
+                    id: "notificationSoundURL",
+                    name: "Notification Sound URL",
+                    note: "MP3 URL for the notification sound. Example: https://www.myinstants.com/media/sounds/discord-notification.mp3",
+                    value: this.settings.notificationSoundURL,
+                    placeholder: "Enter custom sound URL",
+                    onChange: (value) => {
+                        this.settings.notificationSoundURL = value;
+                        this.saveSettings();
+                    }
+                },
+                {
+                    type: "number",
+                    id: "reminderInterval",
+                    name: "Reminder Check Interval (ms)",
+                    note: "This setting controls how often (in milliseconds) the plugin checks for upcoming reminders. The default interval is 1 minute (60000 milliseconds). Shorter intervals provide more frequent checks but may use more system resources.",
+                    value: this.settings.reminderInterval,
+                    min: 10000,
+                    max: 300000,
+                    step: 5000,
+                    onChange: (value) => {
+                        this.settings.reminderInterval = value;
+                        this.saveSettings();
+                    }
+                }
+            ],
+            onChange: (category, id, value) => {
+                BdApi.showToast(`Updated ${id} to ${value}`, {
+                    type: "success"
+                });
+            }
+        });
     }
+    
 }
 
 module.exports = class extends Reminder {
