@@ -1,6 +1,6 @@
 /**
  * @name Reminder
- * @version 1.3.2
+ * @version 1.3.3
  * @description A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
  * @author DevEvil
  * @website https://devevil.com
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.3.2",
+        version: "1.3.3",
         description: "A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.",
         authors: [{
             name: "DevEvil",
@@ -27,11 +27,10 @@ const config = {
         invite: "jsQ9UP7kCA",
     },
     changelog: [{
-        title: "Mini Update - Version 1.3.2",
-        type: "improved",
+        title: "Mini Update - Version 1.3.3",
+        type: "fixed",
         items: [
-            "Improved the style of the reminder inbox.",
-            "✨ If you want to see your suggestion get added next, join the support server and share your ideas with me."
+            "Fixed"
         ]
     }]
 };
@@ -129,7 +128,7 @@ class Reminder {
     stop() {
         BdApi.Patcher.unpatchAll("Reminder");
         clearInterval(this.checkInterval);
-        const reminderButton = document.querySelector(".panels_a4d4d9 > div > button");
+        const reminderButton = document.querySelector(".panels_c48ade > div > button");
         if (reminderButton) {
             reminderButton.parentElement.remove();
         }
@@ -161,7 +160,7 @@ class Reminder {
         containerDiv.appendChild(button);
 
 
-        const panel = document.querySelector(".panels_a4d4d9");
+        const panel = document.querySelector(".panels_c48ade");
         if (panel) {
             panel.appendChild(containerDiv);
         }
