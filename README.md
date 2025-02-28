@@ -28,7 +28,7 @@ This feature repeats your reminders up to 3 times at 5-minute intervals, ensurin
 ### 5. Custom Notification Sound 🔊
 Enhance your notification experience. Use custom sounds for reminders and stay alerted in your own style.
 
-![image](https://github.com/user-attachments/assets/9d7e5037-90c5-43fd-b6ef-560503296bb3)
+![image](https://github.com/user-attachments/assets/0986aebb-074b-4465-9052-d3ae3d085f2f)
 
 ## Links 🔗
 - [Download](https://betterdiscord.app/plugin/Reminder)
