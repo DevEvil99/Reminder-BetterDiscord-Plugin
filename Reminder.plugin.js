@@ -1,6 +1,6 @@
 /**
  * @name Reminder
- * @version 1.3.3
+ * @version 1.3.4
  * @description A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
  * @author DevEvil
  * @website https://devevil.com
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.3.3",
+        version: "1.3.4",
         description: "A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.",
         authors: [{
             name: "DevEvil",
@@ -27,13 +27,31 @@ const config = {
         invite: "jsQ9UP7kCA",
     },
     changelog: [{
-        title: "Mini Update - Version 1.3.3",
+        title: "Update - Version 1.3.4",
         type: "fixed",
         items: [
-            "Fixed"
+            "Resolved various bugs to improve stability",
+            "Replaced deprecated methods and properties"
         ]
     }]
 };
+
+const {
+    Components,
+    ContextMenu,
+    Data,
+    DOM,
+    Logger,
+    Net,
+    Patcher,
+    Plugins,
+    ReactUtils,
+    Themes,
+    UI,
+    Utils,
+    Webpack,
+    React
+} = new BdApi();
 
 class Reminder {
     constructor() {
@@ -51,12 +69,13 @@ class Reminder {
     }
 
 
+
     loadSettings() {
-        return BdApi.loadData("Reminder", "settings") || this.defaultSettings;
+        return Data.load("Reminder", "settings") || this.defaultSettings;
     }
 
     saveSettings() {
-        BdApi.saveData("Reminder", "settings", this.settings);
+        Data.save("Reminder", "settings", this.settings);
     }
 
     playNotificationSound() {
@@ -71,7 +90,7 @@ class Reminder {
     }
 
     loadReminders() {
-        const data = BdApi.loadData("Reminder", "reminders");
+        const data = Data.load("Reminder", "reminders");
         if (data) {
             try {
                 return JSON.parse(data);
@@ -83,7 +102,7 @@ class Reminder {
     }
 
     saveReminders() {
-        BdApi.saveData("Reminder", "reminders", JSON.stringify(this.reminders));
+        Data.save("Reminder", "reminders", JSON.stringify(this.reminders));
     }
 
     showModal(reminder) {
@@ -91,7 +110,7 @@ class Reminder {
         this.reminderCount++;
         this.updateDiscordTitle();
 
-        BdApi.showConfirmationModal(
+        UI.showConfirmationModal(
             "Reminder",
             reminder.text, {
                 confirmText: "OK",
@@ -106,14 +125,14 @@ class Reminder {
     }
 
     start() {
-        if (!BdApi.loadData("Reminder", "settings")) {
-            BdApi.saveData("Reminder", "settings", this.defaultSettings);
+        if (!Data.load("Reminder", "settings")) {
+            Data.save("Reminder", "settings", this.defaultSettings);
         }
 
         this.checkReminders();
         this.addReminderButton();
         this.checkInterval = setInterval(() => this.checkReminders(), this.settings.reminderInterval);
-        BdApi.Patcher.after("Reminder", BdApi.Webpack.getModule(m => m.default && m.default.displayName === "Inbox"), "default", (_, __, ret) => {
+        Patcher.after("Reminder", Webpack.getModule(m => m.default && m.default.displayName === "Inbox"), "default", (_, __, ret) => {
             const Inbox = ret.props.children[1];
             const original = Inbox.type;
             Inbox.type = (props) => {
@@ -126,7 +145,7 @@ class Reminder {
     }
 
     stop() {
-        BdApi.Patcher.unpatchAll("Reminder");
+        Patcher.unpatchAll("Reminder");
         clearInterval(this.checkInterval);
         const reminderButton = document.querySelector(".panels_c48ade > div > button");
         if (reminderButton) {
@@ -216,7 +235,7 @@ class Reminder {
             );
         };
 
-        BdApi.showConfirmationModal(
+        UI.showConfirmationModal(
             "Reminder Guide",
             React.createElement(HelpContent), {
                 confirmText: "Close",
@@ -407,7 +426,7 @@ class Reminder {
             );
         };
 
-        BdApi.showConfirmationModal(
+        UI.showConfirmationModal(
             "Add Reminder",
             React.createElement(ModalContent), {
                 confirmText: "Add Reminder",
@@ -429,11 +448,11 @@ class Reminder {
                         }
 
                         this.addReminder(reminderText, currentDate, repeatable);
-                        BdApi.showToast("Your reminder has been set and will alert you at the specified time.", {
+                        UI.showToast("Your reminder has been set and will alert you at the specified time.", {
                             type: "success"
                         });
                     } else {
-                        BdApi.showToast("Please fill out Reminder Text & Reminder Time fields before adding a reminder.", {
+                        UI.showToast("Please fill out Reminder Text & Reminder Time fields before adding a reminder.", {
                             type: "error"
                         });
                     }
@@ -548,7 +567,7 @@ class Reminder {
             );
         };
     
-        BdApi.showConfirmationModal(
+        UI.showConfirmationModal(
             "Reminder Inbox",
             React.createElement(ReminderList), {
                 confirmText: "Close",
@@ -567,12 +586,12 @@ class Reminder {
     }
 
     createReminderInbox() {
-        return BdApi.React.createElement("div", {
+        return React.createElement("div", {
                 className: "reminder-inbox"
             },
-            BdApi.React.createElement("h2", {}, "Reminders"),
+            React.createElement("h2", {}, "Reminders"),
             ...this.reminders.map(reminder =>
-                BdApi.React.createElement("div", {
+                React.createElement("div", {
                         style: {
                             color: "var(--text-normal)"
                         }
@@ -633,7 +652,7 @@ class Reminder {
             );
         };
 
-        BdApi.showConfirmationModal(
+        UI.showConfirmationModal(
             "Changelog",
             React.createElement(Changelog), {
                 confirmText: "Got it!",
@@ -645,15 +664,15 @@ class Reminder {
 
 
     showChangelogIfNeeded() {
-        const lastVersion = BdApi.loadData("Reminder", "lastVersion");
+        const lastVersion = Data.load("Reminder", "lastVersion");
         if (lastVersion !== config.info.version) {
             this.showChangelog();
-            BdApi.saveData("Reminder", "lastVersion", config.info.version);
+            Data.save("Reminder", "lastVersion", config.info.version);
         }
     }
 
     getSettingsPanel() {
-        return BdApi.UI.buildSettingsPanel({
+        return UI.buildSettingsPanel({
             settings: [
                 {
                     type: "switch",
@@ -694,7 +713,7 @@ class Reminder {
                 }
             ],
             onChange: (category, id, value) => {
-                BdApi.showToast(`Updated ${id} to ${value}`, {
+                UI.showToast(`Updated ${id} to ${value}`, {
                     type: "success"
                 });
             }
