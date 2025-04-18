@@ -1,6 +1,6 @@
 /**
  * @name Reminder
- * @version 1.3.4
+ * @version 1.4
  * @description A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
  * @author DevEvil
  * @website https://devevil.com
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.3.4",
+        version: "1.4",
         description: "A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.",
         authors: [{
             name: "DevEvil",
@@ -25,15 +25,7 @@ const config = {
         github: "https://github.com/DevEvil99/Reminder-BetterDiscord-Plugin",
         github_raw: "https://raw.githubusercontent.com/DevEvil99/Reminder-BetterDiscord-Plugin/main/Reminder.plugin.js",
         invite: "jsQ9UP7kCA",
-    },
-    changelog: [{
-        title: "Update - Version 1.3.4",
-        type: "fixed",
-        items: [
-            "Resolved various bugs to improve stability",
-            "Replaced deprecated methods and properties"
-        ]
-    }]
+    }
 };
 
 const {
@@ -58,7 +50,9 @@ class Reminder {
         this.defaultSettings = {
             notificationSound: true,
             notificationSoundURL: "https://devevil99.github.io/devevil/files/Discord-Notification.mp3",
-            reminderInterval: 60000
+            reminderInterval: 60000,
+            reminderShortcut: "Shift+R",
+            buttonLocation: "both"
         };
         this.settings = this.loadSettings();
         this.reminders = this.loadReminders();
@@ -71,7 +65,8 @@ class Reminder {
 
 
     loadSettings() {
-        return Data.load("Reminder", "settings") || this.defaultSettings;
+        const saved = Data.load("Reminder", "settings") || {};
+        return Object.assign({}, this.defaultSettings, saved);
     }
 
     saveSettings() {
@@ -126,11 +121,30 @@ class Reminder {
 
     start() {
         if (!Data.load("Reminder", "settings")) {
-            Data.save("Reminder", "settings", this.defaultSettings);
+            this.saveSettings();
         }
+        
+
+        this.keybindHandler = (e) => {
+            const keybind = this.settings.reminderShortcut || this.defaultSettings.reminderShortcut;
+            
+            const keys = keybind.toLowerCase().split("+").map(k => k.trim());
+            const shift = keys.includes("shift") ? e.shiftKey : true;
+            const ctrl = keys.includes("ctrl") ? e.ctrlKey : true;
+            const alt = keys.includes("alt") ? e.altKey : true;
+            const meta = keys.includes("cmd") || keys.includes("meta") ? e.metaKey : true;
+            const key = keys.find(k => !["shift", "ctrl", "alt", "cmd", "meta"].includes(k));
+
+            if (shift && ctrl && alt && meta && e.key.toLowerCase() === key.toLowerCase()) {
+                this.openReminderModal();
+            }
+        };
+        document.addEventListener("keydown", this.keybindHandler);
+        
 
         this.checkReminders();
         this.addReminderButton();
+        this.addReminderSidebar();
         this.checkInterval = setInterval(() => this.checkReminders(), this.settings.reminderInterval);
         Patcher.after("Reminder", Webpack.getModule(m => m.default && m.default.displayName === "Inbox"), "default", (_, __, ret) => {
             const Inbox = ret.props.children[1];
@@ -153,9 +167,17 @@ class Reminder {
         }
         this.reminderCount = 0;
         this.updateDiscordTitle();
+
+        document.removeEventListener("keydown", this.keybindHandler);
+
+        if (this.guildsNavObserver) this.guildsNavObserver.disconnect();
+        document.querySelector('.reminderPluginSideBtn')?.parentElement?.remove();
+
     }
 
     addReminderButton() {
+        if (!["userarea", "both"].includes(this.settings.buttonLocation)) return;
+
         const containerDiv = document.createElement("div");
         containerDiv.style.display = "flex";
         containerDiv.style.justifyContent = "space-between";
@@ -165,7 +187,7 @@ class Reminder {
 
         const button = document.createElement("button");
         button.textContent = "Add Reminder";
-        button.style.background = "var(--bg-overlay-3, var(--channeltextarea-background))";
+        button.style.background = "var(--bg-base-tertiary)";
         button.style.outline = "none";
         button.style.border = "none";
         button.style.padding = "10px";
@@ -184,6 +206,76 @@ class Reminder {
             panel.appendChild(containerDiv);
         }
     }
+
+    addReminderSidebar() {
+        if (!["sidebar", "both"].includes(this.settings.buttonLocation)) return;
+
+        const observer = new MutationObserver(() => {
+            const guildsNav = document.querySelector('.itemsContainer_ef3116');
+            if (!guildsNav || guildsNav.querySelector('.reminderPluginSideBtn')) return;
+
+            
+            const listItem = document.createElement("div");
+            listItem.className = "listItem__650eb";
+
+            const listItemWrapper = document.createElement("div");
+            listItemWrapper.className = "listItemWrapper__91816 reminderWrapper";
+
+            listItemWrapper.style.marginLeft = '20px';
+
+            const wrapper = document.createElement("div");
+            wrapper.className = "wrapper_cc5dd2 reminderPluginSideBtn";
+
+            wrapper.innerHTML = `
+            <svg width="48" height="48" viewBox="-4 -4 48 48" class="svg_cc5dd2" overflow="visible" style="cursor: pointer;">
+                <defs>
+                    <path d="M0 17.4545C0 11.3449 0 8.29005 1.18902 5.95647C2.23491 3.90379 3.90379 2.23491 5.95647 1.18902C8.29005 0 11.3449 0 17.4545 0H22.5455C28.6551 0 31.71 0 34.0435 1.18902C36.0962 2.23491 37.7651 3.90379 38.811 5.95647C40 8.29005 40 11.3449 40 17.4545V22.5455C40 28.6551 40 31.71 38.811 34.0435C37.7651 36.0962 36.0962 37.7651 34.0435 38.811C31.71 40 28.6551 40 22.5455 40H17.4545C11.3449 40 8.29005 40 5.95647 38.811C3.90379 37.7651 2.23491 36.0962 1.18902 34.0435C0 31.71 0 28.6551 0 22.5455V17.4545Z" id="reminder-blob-mask"></path>
+                </defs>
+                <mask id="reminder-mask" fill="black" x="0" y="0" width="40" height="40">
+                    <use href="#reminder-blob-mask" fill="white" />
+                </mask>
+                <foreignObject mask="url(#reminder-mask)" x="0" y="0" width="40" height="40">
+                    <div class="circleIconButton__5bc7e" aria-label="Reminders" role="treeitem" tabindex="-1">
+                        <svg class="circleIcon__5bc7e" aria-hidden="true" role="img" xmlns="http://www.w3.org/2000/svg"
+                            width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <path fill="currentColor"
+                                d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2Zm6-6V11c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2Z" />
+                        </svg>
+                    </div>
+                </foreignObject>
+            </svg>
+                    `;
+
+            wrapper.onclick = () => this.openReminderModal();
+
+            listItem.appendChild(listItemWrapper);
+
+            listItemWrapper.appendChild(wrapper);
+            UI.createTooltip(wrapper, "Add Reminder", { style: "primary", side: "right" });
+            
+
+
+            const separator = guildsNav.querySelector('[aria-label="Servers"]');
+            if (separator?.parentElement) {
+                separator.parentElement.insertBefore(listItemWrapper, separator);
+            } else {
+                guildsNav.appendChild(listItemWrapper);
+            }
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+        this.guildsNavObserver = observer;
+    }
+
+    refreshReminderButtons() {
+        document.querySelector(".reminder-button")?.parentElement?.remove();
+    
+        document.querySelector(".reminderPluginSideBtn")?.parentElement?.remove();
+    
+        this.addReminderButton();
+        this.addReminderSidebar();
+    }
+
 
     openHelpModal() {
         const {
@@ -214,7 +306,7 @@ class Reminder {
                         style: {
                             marginBottom: "10px"
                         }
-                    }, "Set the time for your reminder using the 'Reminder Time' field."),
+                    }, "Set the time for your reminder using the 'Reminder Time' field by clicking on the clock icon."),
                     React.createElement("li", {
                         style: {
                             marginBottom: "10px"
@@ -286,13 +378,6 @@ class Reminder {
                             marginBottom: "5px"
                         }
                     }, "Reminder Text"),
-                    React.createElement("p", {
-                        style: {
-                            color: "var(--header-primary)",
-                            marginBottom: "5px",
-                            fontSize: "12px"
-                        }
-                    }, "Enter a short description of your reminder (e.g., 'Call friend', 'Message @devevil at 6 PM')."),
                     React.createElement("input", {
                         type: "text",
                         id: "reminderText",
@@ -301,7 +386,7 @@ class Reminder {
                         onChange: (e) => setReminderText(e.target.value),
                         required: true,
                         style: {
-                            background: "var(--bg-overlay-3, var(--channeltextarea-background))",
+                            background: "var(--bg-base-tertiary)",
                             outline: "none",
                             border: "none",
                             padding: "10px",
@@ -322,13 +407,6 @@ class Reminder {
                             marginBottom: "5px"
                         }
                     }, "Reminder Time"),
-                    React.createElement("p", {
-                        style: {
-                            color: "var(--header-primary)",
-                            marginBottom: "5px",
-                            fontSize: "12px"
-                        }
-                    }, "Select the time for the reminder by clicking on the clock icon."),
                     React.createElement("input", {
                         type: "time",
                         id: "reminderTime",
@@ -336,7 +414,7 @@ class Reminder {
                         onChange: (e) => setReminderTime(e.target.value),
                         required: true,
                         style: {
-                            background: "var(--bg-overlay-3, var(--channeltextarea-background))",
+                            background: "var(--bg-base-tertiary)",
                             outline: "none",
                             border: "none",
                             padding: "10px",
@@ -391,7 +469,7 @@ class Reminder {
                                 top: "0",
                                 height: "20px",
                                 width: "20px",
-                                backgroundColor: "var(--bg-overlay-3, var(--channeltextarea-background))",
+                                backgroundColor: "var(--bg-base-tertiary)",
                                 borderRadius: "5px",
                                 transition: "0.2s ease-in-out",
                                 display: "flex",
@@ -411,18 +489,42 @@ class Reminder {
                         "Repeat this reminder up to 3 times every 5 minutes unless acknowledged (Pressing 'OK')."
                     )
                 ),
-                React.createElement("button", {
-                    style: {
-                        background: "var(--bg-overlay-3, var(--channeltextarea-background))",
+                React.createElement(
+                    "button",
+                    {
+                      style: {
+                        background: "var(--bg-base-tertiary)",
                         border: "none",
                         padding: "10px",
                         borderRadius: "10px",
                         color: "var(--text-normal)",
                         cursor: "pointer",
-                        marginTop: "10px"
+                        marginTop: "10px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px"
+                      },
+                      onClick: () => this.showAllReminders()
                     },
-                    onClick: () => this.showAllReminders()
-                }, "View/Manage All Reminders")
+
+                    React.createElement(
+                      "svg",
+                      {
+                        xmlns: "http://www.w3.org/2000/svg",
+                        width: "16",
+                        height: "16",
+                        fill: "currentColor",
+                        viewBox: "0 0 16 16"
+                      },
+                      React.createElement("path", {
+                        d: "M8 3.5a.5.5 0 0 1 .5.5v4h3a.5.5 0 0 1 0 1H8a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5z"
+                      }),
+                      React.createElement("path", {
+                        d: "M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm0-1A7 7 0 1 1 8 1a7 7 0 0 1 0 14z"
+                      })
+                    ),
+                    "View/Manage All Reminders"
+                )                  
             );
         };
 
@@ -602,65 +704,41 @@ class Reminder {
     }
 
     showChangelog() {
-        const {
-            React
-        } = BdApi;
-
-        const Changelog = () => {
-            return React.createElement("div", {
-                    style: {
-                        maxWidth: "600px",
-                        margin: "0 auto",
-                        textAlign: "left",
-                        color: "var(--text-normal)",
-                        lineHeight: "1.5"
-                    }
-                },
-                config.changelog.map(change =>
-                    React.createElement("div", {
-                            key: change.title,
-                            style: {
-                                marginBottom: "20px",
-                                borderBottom: "1px solid var(--background-modifier-accent)",
-                                paddingBottom: "10px"
-                            }
-                        },
-                        React.createElement("h3", {
-                            style: {
-                                color: "var(--header-secondary)",
-                                fontSize: "16px",
-                                marginBottom: "10px"
-                            }
-                        }, `${change.type === "added" ? "🆕 " : "🛠️ "}${change.title}`),
-                        React.createElement("ul", {
-                                style: {
-                                    paddingLeft: "20px",
-                                    listStyle: "disc"
-                                }
-                            },
-                            change.items.map(item =>
-                                React.createElement("li", {
-                                    key: item,
-                                    style: {
-                                        marginBottom: "5px"
-                                    }
-                                }, item)
-                            )
-                        )
-                    )
-                )
-            );
-        };
-
-        UI.showConfirmationModal(
-            "Changelog",
-            React.createElement(Changelog), {
-                confirmText: "Got it!",
-                cancelText: null,
-                onConfirm: () => {}
+        const changes = [
+            {
+                title: "Major Update - Version 1.4",
+                type: "added",
+                items: [
+                    "✨ Default Shortcut: Added 'Shift+R' to open the reminder modal (customizable in settings).",
+                    "🔔 Second Reminder Button: Added a new Reminder button in the left sidebar.",
+                    "📍 Customizable Button Location: New setting to choose where the Reminder button appears—User Area, Sidebar, or Both (default is Both).",
+                    "⌨️ Shortcut Customization: Added an option to customize or change the Reminder shortcut.",
+                    "🎨 UI Enhancements: Updated the colors of various elements for a fresher look.",
+                    "👾 Simplified Reminder Modal: Removed the descriptions in the Reminder Modal for a cleaner, more minimal design. Descriptions are available in the Reminder Guide Modal (accessible via the ? icon).",
+                    "🎨 New Changelog: A cleaner, more organized changelog—just like this one!"
+                ]
             }
-        );
+        ];
+    
+        const options = {
+            title: "Reminder Plugin",
+            subtitle: "By DevEvil",
+            changes: changes, 
+        };
+    
+        UI.showChangelogModal({
+            title: options.title,
+            subtitle: options.subtitle,
+            //blurb: options.blurb,
+            //banner: options.banner,
+            //video: options.video,
+            //poster: options.poster,
+            //footer: options.footer,
+            changes: options.changes
+        });
+
     }
+    
 
 
     showChangelogIfNeeded() {
@@ -674,6 +752,25 @@ class Reminder {
     getSettingsPanel() {
         return UI.buildSettingsPanel({
             settings: [
+                {
+                    type: "radio",
+                    id: "buttonLocation",
+                    name: "Reminder Button Location",
+                    note: "Choose where the Reminder button should appear.",
+                    options: [
+                        { name: "User Area", value: "userarea" },
+                        { name: "Sidebar", value: "sidebar" },
+                        { name: "Both", value: "both" }
+                    ],
+                    value: this.settings.buttonLocation,
+                    onChange: (value) => {
+                        this.settings.buttonLocation = value;
+                        this.saveSettings();
+    
+                        this.refreshReminderButtons();
+                        UI.showToast("Button location updated!", { type: "success" });
+                    }
+                },                
                 {
                     type: "switch",
                     id: "notificationSound",
@@ -710,7 +807,19 @@ class Reminder {
                         this.settings.reminderInterval = value;
                         this.saveSettings();
                     }
-                }
+                },
+                {
+                    type: "text",
+                    id: "reminderShortcut",
+                    name: "Reminder Shortcut",
+                    note: "Set your preferred shortcut to open the reminder modal (e.g., Shift+R, Ctrl+Alt+R).",
+                    value: this.settings.reminderShortcut,
+                    placeholder: "Shift+R",
+                    onChange: (value) => {
+                        this.settings.reminderShortcut = value;
+                        this.saveSettings();
+                    }
+                }                
             ],
             onChange: (category, id, value) => {
                 UI.showToast(`Updated ${id} to ${value}`, {
@@ -719,7 +828,7 @@ class Reminder {
             }
         });
     }
-    
+
 }
 
 module.exports = class extends Reminder {
