@@ -27,7 +27,7 @@ This feature repeats your reminders up to 3 times at 5-minute intervals, ensurin
 ![image](https://github.com/user-attachments/assets/d51117d4-1541-4d1b-aa19-d0fd93bf54c9)
 
 ### 5. Customizable ⚙️
-Easily customize and adjust notification sounds, button placement, shortcut, and more.
+Easily customize and adjust notification sound, button placement, shortcut, and more.
 
 ![image](https://github.com/user-attachments/assets/dac5d691-99ec-42a5-baf1-2da6039f535d)
 
