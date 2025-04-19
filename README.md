@@ -34,6 +34,7 @@ Easily customize and adjust notification sound, button placement, shortcut, and 
 
 ## Links 🔗
 - [Download](https://betterdiscord.app/plugin/Reminder)
+- [Changelog](https://github.com/DevEvil99/Reminder-BetterDiscord-Plugin/blob/main/CHANGELOG.md)
 - [All of my themes](https://betterdiscord.app/developer/DevEvil)
 - [Website](https://devevil.com)
 - [Support Server](https://dsc.gg/devevil)
