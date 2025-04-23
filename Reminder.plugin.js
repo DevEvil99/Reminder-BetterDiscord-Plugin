@@ -1,6 +1,6 @@
 /**
  * @name Reminder
- * @version 1.4
+ * @version 1.4.1
  * @description A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
  * @author DevEvil
  * @website https://devevil.com
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.4",
+        version: "1.4.1",
         description: "A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.",
         authors: [{
             name: "DevEvil",
@@ -31,6 +31,7 @@ const config = {
 const {
     Components,
     ContextMenu,
+    Commands,
     Data,
     DOM,
     Logger,
@@ -51,8 +52,10 @@ class Reminder {
             notificationSound: true,
             notificationSoundURL: "https://devevil99.github.io/devevil/files/Discord-Notification.mp3",
             reminderInterval: 60000,
-            reminderShortcut: "Shift+R",
-            buttonLocation: "both"
+            reminderShortcut: ["Shift", "R"],
+            buttonLocation: "both",
+            firstDayOfWeek: "Sunday",
+            repeatableReminderCount: 3
         };
         this.settings = this.loadSettings();
         this.reminders = this.loadReminders();
@@ -61,8 +64,6 @@ class Reminder {
         this.audio = new Audio(this.settings.notificationSoundURL);
         this.reminderCount = 0;
     }
-
-
 
     loadSettings() {
         const saved = Data.load("Reminder", "settings") || {};
@@ -114,6 +115,11 @@ class Reminder {
                     this.reminderCount = 0;
                     this.updateDiscordTitle();
                     this.acknowledgedReminders[reminder.time] = true;
+
+                    this.acknowledgedReminders[reminder.id] = true;
+
+                    this.reminders = this.reminders.filter(r => r.id !== reminder.id);
+                    this.saveReminders();
                 }
             }
         );
@@ -123,24 +129,35 @@ class Reminder {
         if (!Data.load("Reminder", "settings")) {
             this.saveSettings();
         }
-        
 
         this.keybindHandler = (e) => {
-            const keybind = this.settings.reminderShortcut || this.defaultSettings.reminderShortcut;
-            
-            const keys = keybind.toLowerCase().split("+").map(k => k.trim());
-            const shift = keys.includes("shift") ? e.shiftKey : true;
-            const ctrl = keys.includes("ctrl") ? e.ctrlKey : true;
-            const alt = keys.includes("alt") ? e.altKey : true;
-            const meta = keys.includes("cmd") || keys.includes("meta") ? e.metaKey : true;
-            const key = keys.find(k => !["shift", "ctrl", "alt", "cmd", "meta"].includes(k));
-
-            if (shift && ctrl && alt && meta && e.key.toLowerCase() === key.toLowerCase()) {
+            const keybind = this.settings.reminderShortcut;
+            if (!Array.isArray(keybind) || keybind.length === 0) return;
+        
+            const keys = keybind.map(k => k.toLowerCase());
+        
+            const hasShift = keys.includes("shift");
+            const hasCtrl = keys.includes("control") || keys.includes("ctrl");
+            const hasAlt = keys.includes("alt");
+            const hasMeta = keys.includes("meta") || keys.includes("cmd") || keys.includes("command");
+        
+            const mainKey = keys.find(k => !["shift", "control", "ctrl", "alt", "meta", "cmd", "command"].includes(k));
+            if (!mainKey) return;
+        
+            const match =
+                (!hasShift || e.shiftKey) &&
+                (!hasCtrl || e.ctrlKey) &&
+                (!hasAlt || e.altKey) &&
+                (!hasMeta || e.metaKey) &&
+                e.key.toLowerCase() === mainKey;
+        
+            if (match) {
+                e.preventDefault();
                 this.openReminderModal();
             }
         };
-        document.addEventListener("keydown", this.keybindHandler);
         
+        document.addEventListener("keydown", this.keybindHandler);
 
         this.checkReminders();
         this.addReminderButton();
@@ -161,7 +178,7 @@ class Reminder {
     stop() {
         Patcher.unpatchAll("Reminder");
         clearInterval(this.checkInterval);
-        const reminderButton = document.querySelector(".panels_c48ade > div > button");
+        const reminderButton = document.querySelector(".reminder-button");
         if (reminderButton) {
             reminderButton.parentElement.remove();
         }
@@ -172,7 +189,6 @@ class Reminder {
 
         if (this.guildsNavObserver) this.guildsNavObserver.disconnect();
         document.querySelector('.reminderPluginSideBtn')?.parentElement?.remove();
-
     }
 
     addReminderButton() {
@@ -183,7 +199,6 @@ class Reminder {
         containerDiv.style.justifyContent = "space-between";
         containerDiv.style.alignItems = "center";
         containerDiv.style.margin = "10px";
-
 
         const button = document.createElement("button");
         button.textContent = "Add Reminder";
@@ -200,8 +215,7 @@ class Reminder {
 
         containerDiv.appendChild(button);
 
-
-        const panel = document.querySelector(".panels_c48ade");
+        const panel = document.querySelector(`.${Webpack.getByKeys('panels').panels}`);
         if (panel) {
             panel.appendChild(containerDiv);
         }
@@ -209,25 +223,24 @@ class Reminder {
 
     addReminderSidebar() {
         if (!["sidebar", "both"].includes(this.settings.buttonLocation)) return;
-
+    
         const observer = new MutationObserver(() => {
-            const guildsNav = document.querySelector('.itemsContainer_ef3116');
+            const guildsNav = document.querySelector(`.${Webpack.getByKeys('unreadMentionsIndicatorBottom').itemsContainer}`);
             if (!guildsNav || guildsNav.querySelector('.reminderPluginSideBtn')) return;
-
-            
+    
             const listItem = document.createElement("div");
-            listItem.className = "listItem__650eb";
-
+            listItem.className = Webpack.getByKeys('tutorialContainer').listItem;
+    
             const listItemWrapper = document.createElement("div");
-            listItemWrapper.className = "listItemWrapper__91816 reminderWrapper";
-
+            listItemWrapper.className = `${Webpack.getByKeys('listItemWrapper').listItemWrapper} reminderWrapper`;
+    
             listItemWrapper.style.marginLeft = '20px';
-
+    
             const wrapper = document.createElement("div");
-            wrapper.className = "wrapper_cc5dd2 reminderPluginSideBtn";
-
+            wrapper.className = `${Webpack.getByKeys('wrapperSimple').wrapper} reminderPluginSideBtn`;
+    
             wrapper.innerHTML = `
-            <svg width="48" height="48" viewBox="-4 -4 48 48" class="svg_cc5dd2" overflow="visible" style="cursor: pointer;">
+            <svg width="48" height="48" viewBox="-4 -4 48 48" class="${Webpack.getByKeys('wrapperSimple').svg}" overflow="visible" style="cursor: pointer;">
                 <defs>
                     <path d="M0 17.4545C0 11.3449 0 8.29005 1.18902 5.95647C2.23491 3.90379 3.90379 2.23491 5.95647 1.18902C8.29005 0 11.3449 0 17.4545 0H22.5455C28.6551 0 31.71 0 34.0435 1.18902C36.0962 2.23491 37.7651 3.90379 38.811 5.95647C40 8.29005 40 11.3449 40 17.4545V22.5455C40 28.6551 40 31.71 38.811 34.0435C37.7651 36.0962 36.0962 37.7651 34.0435 38.811C31.71 40 28.6551 40 22.5455 40H17.4545C11.3449 40 8.29005 40 5.95647 38.811C3.90379 37.7651 2.23491 36.0962 1.18902 34.0435C0 31.71 0 28.6551 0 22.5455V17.4545Z" id="reminder-blob-mask"></path>
                 </defs>
@@ -235,8 +248,8 @@ class Reminder {
                     <use href="#reminder-blob-mask" fill="white" />
                 </mask>
                 <foreignObject mask="url(#reminder-mask)" x="0" y="0" width="40" height="40">
-                    <div class="circleIconButton__5bc7e" aria-label="Reminders" role="treeitem" tabindex="-1">
-                        <svg class="circleIcon__5bc7e" aria-hidden="true" role="img" xmlns="http://www.w3.org/2000/svg"
+                    <div class="${Webpack.getByKeys('circleIcon').circleIconButton} reminderSideBtnIcon" aria-label="Reminders" role="treeitem" tabindex="-1">
+                        <svg class="${Webpack.getByKeys('circleIcon').circleIcon}" aria-hidden="true" role="img" xmlns="http://www.w3.org/2000/svg"
                             width="24" height="24" fill="none" viewBox="0 0 24 24">
                             <path fill="currentColor"
                                 d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2Zm6-6V11c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2Z" />
@@ -244,17 +257,14 @@ class Reminder {
                     </div>
                 </foreignObject>
             </svg>
-                    `;
-
+            `;
+    
             wrapper.onclick = () => this.openReminderModal();
-
+    
             listItem.appendChild(listItemWrapper);
-
             listItemWrapper.appendChild(wrapper);
             UI.createTooltip(wrapper, "Add Reminder", { style: "primary", side: "right" });
-            
-
-
+    
             const separator = guildsNav.querySelector('[aria-label="Servers"]');
             if (separator?.parentElement) {
                 separator.parentElement.insertBefore(listItemWrapper, separator);
@@ -262,25 +272,21 @@ class Reminder {
                 guildsNav.appendChild(listItemWrapper);
             }
         });
-
+    
         observer.observe(document.body, { childList: true, subtree: true });
         this.guildsNavObserver = observer;
     }
+    
 
     refreshReminderButtons() {
         document.querySelector(".reminder-button")?.parentElement?.remove();
-    
         document.querySelector(".reminderPluginSideBtn")?.parentElement?.remove();
-    
         this.addReminderButton();
         this.addReminderSidebar();
     }
 
-
     openHelpModal() {
-        const {
-            React
-        } = BdApi;
+        const { React } = BdApi;
 
         const HelpContent = () => {
             return React.createElement("div", null,
@@ -316,13 +322,37 @@ class Reminder {
                         style: {
                             marginBottom: "10px"
                         }
-                    }, "Your reminder will alert you at the specified time!"),
+                    }, "Your reminder will alert you at the specified time!")
+                ),
+                React.createElement("h4", {
+                    style: {
+                        color: "var(--header-primary)",
+                        marginBottom: "10px"
+                    }
+                }, "Other Features"),
+                React.createElement("ul", {
+                    style: {
+                        color: "var(--text-normal)",
+                        marginLeft: "20px",
+                        listStyle: "circle"
+                    }
+                },
                     React.createElement("li", {
                         style: {
                             marginBottom: "10px"
                         }
-                    }, "Repeatable Reminder: This feature repeats your reminders up to 3 times at 5-minute intervals, ensuring you're alerted even if you miss the initial prompt.")
-
+                    },
+                        React.createElement("strong", null, "Reminder Day:"),
+                        " Schedule reminders for a specific day of the week! Set the day you want, and your reminder will trigger at the selected time."
+                    ),
+                    React.createElement("li", {
+                        style: {
+                            marginBottom: "10px"
+                        }
+                    },
+                        React.createElement("strong", null, "Repeatable Reminder:"),
+                        ` Repeats reminders up to ${this.settings.repeatableReminderCount} times (set in settings, default 3) at 5-minute intervals unless acknowledged (by pressing 'OK').`
+                    )
                 )
             );
         };
@@ -336,13 +366,31 @@ class Reminder {
     }
 
     openReminderModal() {
-        const {
-            React
-        } = BdApi;
+        const { React } = BdApi;
+
+        const selectedDayRef = { current: "" };
+
         const ModalContent = () => {
             const [reminderText, setReminderText] = React.useState("");
             const [reminderTime, setReminderTime] = React.useState("");
             const [repeatable, setRepeatable] = React.useState(false);
+            const [selectedDay, setSelectedDay] = React.useState("");
+
+            const selectDay = (day) => {
+                setSelectedDay(day);
+            };
+
+            React.useEffect(() => {
+                selectedDayRef.current = selectedDay;
+            }, [selectedDay]);
+
+            const baseDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            const firstDay = this.settings.firstDayOfWeek || "Sunday";
+            const firstDayIndex = baseDays.indexOf(firstDay);
+            const daysOfWeek = [
+                ...baseDays.slice(firstDayIndex),
+                ...baseDays.slice(0, firstDayIndex)
+            ];
 
             return React.createElement("div", {
                     style: {
@@ -434,6 +482,40 @@ class Reminder {
                             color: "var(--header-primary)",
                             marginBottom: "5px"
                         }
+                    }, "Reminder Day (Optional)"),
+                    React.createElement("div", {
+                            style: {
+                                display: "flex",
+                                gap: "5px",
+                                flexWrap: "wrap"
+                            }
+                        },
+                        daysOfWeek.map(day =>
+                            React.createElement("button", {
+                                key: day,
+                                onClick: () => selectDay(day),
+                                style: {
+                                    padding: "5px 10px",
+                                    borderRadius: "5px",
+                                    border: selectedDay === day ? "2px solid var(--brand-experiment)" : "1px solid var(--background-modifier-accent)",
+                                    background: selectedDay === day ? "var(--background-modifier-selected)" : "var(--bg-base-tertiary)",
+                                    color: "var(--text-normal)",
+                                    cursor: "pointer"
+                                }
+                            }, day.slice(0, 3))
+                        )
+                    )
+                ),
+                React.createElement("div", {
+                        style: {
+                            marginBottom: "15px"
+                        }
+                    },
+                    React.createElement("h4", {
+                        style: {
+                            color: "var(--header-primary)",
+                            marginBottom: "5px"
+                        }
                     }, "Repeatable Reminder"),
                     React.createElement("label", {
                             style: {
@@ -486,7 +568,7 @@ class Reminder {
                         }, React.createElement("path", {
                             d: "M20.285 6.709a1 1 0 0 0-1.414-1.414l-9.928 9.929-3.535-3.535a1 1 0 1 0-1.414 1.414l4.243 4.243a1 1 0 0 0 1.414 0l10.634-10.637Z"
                         }))),
-                        "Repeat this reminder up to 3 times every 5 minutes unless acknowledged (Pressing 'OK')."
+                        `Repeat this reminder up to ${this.settings.repeatableReminderCount} times every 5 minutes unless acknowledged (Pressing 'OK').`
                     )
                 ),
                 React.createElement(
@@ -506,7 +588,6 @@ class Reminder {
                       },
                       onClick: () => this.showAllReminders()
                     },
-
                     React.createElement(
                       "svg",
                       {
@@ -524,7 +605,7 @@ class Reminder {
                       })
                     ),
                     "View/Manage All Reminders"
-                )                  
+                )
             );
         };
 
@@ -536,20 +617,29 @@ class Reminder {
                     const reminderText = document.getElementById("reminderText").value;
                     const reminderTime = document.getElementById("reminderTime").value;
                     const repeatable = document.getElementById("repeatable").checked;
+                    const selectedDay = selectedDayRef.current;
 
                     if (reminderText && reminderTime) {
-                        const currentDate = new Date();
                         const [hours, minutes] = reminderTime.split(":");
-                        currentDate.setHours(hours);
-                        currentDate.setMinutes(minutes);
-                        currentDate.setSeconds(0);
-                        currentDate.setMilliseconds(0);
+                        let targetDate = new Date();
+                        targetDate.setHours(parseInt(hours));
+                        targetDate.setMinutes(parseInt(minutes));
+                        targetDate.setSeconds(0);
+                        targetDate.setMilliseconds(0);
 
-                        if (currentDate.getTime() < Date.now()) {
-                            currentDate.setDate(currentDate.getDate() + 1);
+                        if (selectedDay) {
+                            const dayIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(selectedDay);
+                            const currentDayIndex = targetDate.getDay();
+                            let daysUntil = (dayIndex - currentDayIndex + 7) % 7;
+                            if (daysUntil === 0 && targetDate.getTime() <= Date.now()) {
+                                daysUntil = 7;
+                            }
+                            targetDate.setDate(targetDate.getDate() + daysUntil);
+                        } else if (targetDate.getTime() <= Date.now()) {
+                            targetDate.setDate(targetDate.getDate() + 1);
                         }
 
-                        this.addReminder(reminderText, currentDate, repeatable);
+                        this.addReminder(reminderText, targetDate, repeatable, selectedDay ? [selectedDay] : []);
                         UI.showToast("Your reminder has been set and will alert you at the specified time.", {
                             type: "success"
                         });
@@ -563,121 +653,350 @@ class Reminder {
         );
     }
 
-    addReminder(text, time, repeatable) {
+    addReminder(text, time, repeatable, days = []) {
         const reminder = {
+            id: Date.now() + Math.random(),
             text,
-            time: time.getTime(),
+            time: typeof time === "number" ? time : time.getTime(),
             repeatable,
             repeatCount: 0,
+            days
         };
         this.reminders.push(reminder);
         this.saveReminders();
     }
+    
 
     deleteReminder(reminder) {
         this.reminders = this.reminders.filter(r => r.time !== reminder.time);
         this.saveReminders();
-        this.openReminderModal();
+        this.showAllReminders();
     }
 
     checkReminders() {
-        const now = Date.now();
+        const now = new Date();
+        const updatedReminders = [];
+    
         this.reminders.forEach(reminder => {
-            if (reminder.time <= now) {
-                if (this.acknowledgedReminders[reminder.time]) {
-                    return;
-                }
-
+            const reminderDate = new Date(reminder.time);
+            const today = now.toLocaleString('en-US', { weekday: 'long' });
+    
+            const isDue = reminder.time <= now.getTime() &&
+                          now.getTime() - reminder.time <= this.settings.reminderInterval;
+    
+            const isDayMatch = reminder.days.length === 0 || reminder.days.includes(today);
+    
+            if (isDue && isDayMatch && !this.acknowledgedReminders[reminder.id]) {
                 this.showModal(reminder);
-
-                if (reminder.repeatable && reminder.repeatCount < 3) {
-                    reminder.time = now + 5 * 60 * 1000;
+    
+                if (reminder.repeatable && reminder.repeatCount < this.settings.repeatableReminderCount) {
                     reminder.repeatCount += 1;
+                    reminder.time = now.getTime() + 5 * 60 * 1000;
+                    delete this.acknowledgedReminders[reminder.id];
+                    updatedReminders.push(reminder);
                 } else {
-                    this.reminders = this.reminders.filter(r => r !== reminder);
+                    this.acknowledgedReminders[reminder.id] = true;
                 }
-                this.saveReminders();
+            } else {
+                if (reminder.days.length > 0 && reminder.time < now.getTime()) {
+                    let nextDate = new Date();
+                    const dayIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(reminder.days[0]);
+                    const currentDayIndex = nextDate.getDay();
+                    let daysUntil = (dayIndex - currentDayIndex + 7) % 7;
+                    if (daysUntil === 0) daysUntil = 7;
+    
+                    nextDate.setDate(nextDate.getDate() + daysUntil);
+                    nextDate.setHours(reminderDate.getHours());
+                    nextDate.setMinutes(reminderDate.getMinutes());
+                    nextDate.setSeconds(0);
+                    nextDate.setMilliseconds(0);
+    
+                    reminder.time = nextDate.getTime();
+                    reminder.repeatCount = 0;
+                }
+    
+                if (!this.acknowledgedReminders[reminder.id]) {
+                    updatedReminders.push(reminder);
+                }
             }
         });
+    
+        this.reminders = updatedReminders;
+        this.saveReminders();
     }
-
+    
+    
     showAllReminders() {
         const { React } = BdApi;
+    
         const ReminderList = () => {
+            const [sortOrder, setSortOrder] = React.useState('asc');
+    
+            const sortedReminders = [...this.reminders].sort((a, b) => 
+                sortOrder === 'asc' ? a.time - b.time : b.time - a.time
+            );
+    
+            const handleSortToggle = () => {
+                setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+            };
+    
+            const handleDelete = (reminder) => {
+                UI.showConfirmationModal(
+                    "Confirm Deletion",
+                    `Are you sure you want to delete "${reminder.text}"?`,
+                    {
+                        confirmText: "Delete",
+                        cancelText: "Cancel",
+                        danger: true,
+                        onConfirm: () => {
+                            this.deleteReminder(reminder);
+                            UI.showToast("Reminder deleted.", { type: "success" });
+                        }
+                    }
+                );
+            };
+    
             return React.createElement("div", {
+                style: {
+                    padding: "20px",
+                    maxHeight: "500px",
+                    overflowY: "auto",
+                    backgroundColor: "var(--background-primary)",
+                    borderRadius: "8px",
+                    fontFamily: "var(--font-primary)"
+                }
+            },
+                React.createElement("div", {
                     style: {
-                        padding: "5px"
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "20px"
                     }
                 },
+                    React.createElement("button", {
+                        onClick: handleSortToggle,
+                        style: {
+                            background: "var(--button-secondary-background)",
+                            border: "none",
+                            padding: "8px 12px",
+                            borderRadius: "4px",
+                            color: "var(--text-normal)",
+                            cursor: "pointer",
+                            fontSize: "14px",
+                            transition: "background-color 0.2s"
+                        },
+                        onMouseEnter: (e) => e.target.style.backgroundColor = "var(--button-secondary-background-hover)",
+                        onMouseLeave: (e) => e.target.style.backgroundColor = "var(--button-secondary-background)"
+                    },
+                        React.createElement("svg", {
+                            xmlns: "http://www.w3.org/2000/svg",
+                            width: "16",
+                            height: "16",
+                            fill: "currentColor",
+                            viewBox: "0 0 24 24",
+                            style: { marginRight: "5px", verticalAlign: "middle" }
+                        }, 
+                            React.createElement("path", {
+                                d: "M5.05 3C3.291 3 2.352 5.024 3.51 6.317l5.422 6.059v4.874c0 .472.227.917.613 1.2l3.069 2.25c1.01.742 2.454.036 2.454-1.2v-7.124l5.422-6.059C21.647 5.024 20.708 3 18.95 3H5.05Z"
+                            })
+                        ),
+                        `Sort by ${sortOrder === 'asc' ? 'Oldest' : 'Newest'}`
+                    )
+                ),
                 this.reminders.length === 0 ?
-                React.createElement("p", {
-                    style: {
-                        color: "var(--text-muted)",
-                        fontSize: "16px",
-                        textAlign: "center",
-                        margin: "10px 0"
-                    }
-                }, "No reminders set.") :
-                this.reminders.map(reminder =>
                     React.createElement("div", {
+                        style: {
+                            textAlign: "center",
+                            color: "var(--text-muted)",
+                            padding: "20px",
+                            border: "1px dashed var(--background-modifier-accent)",
+                            borderRadius: "8px"
+                        }
+                    },
+                        React.createElement("svg", {
+                            xmlns: "http://www.w3.org/2000/svg",
+                            width: "48",
+                            height: "48",
+                            fill: "var(--text-muted)",
+                            viewBox: "0 0 24 24",
+                            style: { marginBottom: "10px" }
+                        },
+                            React.createElement("path", {
+                                d: "M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+                            })
+                        ),
+                        React.createElement("p", {
+                            style: {
+                                fontSize: "16px",
+                                margin: "10px 0"
+                            }
+                        }, "No reminders set.")
+                    ) :
+                    sortedReminders.map(reminder =>
+                        React.createElement("div", {
                             key: reminder.time,
                             style: {
-                                display: "flex",
-                                justifyContent: "space-between",
+                                display: "grid",
+                                gridTemplateColumns: "1fr auto auto",
                                 alignItems: "center",
-                                padding: "10px",
-                                margin: "10px 0",
-                                backgroundColor: "var(--background-tertiary)",
-                                borderRadius: "8px",
-                                transition: "background-color 0.3s",
-                                boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)"
-                            },
-                            onMouseEnter: (e) => e.currentTarget.style.backgroundColor = "var(--background-secondary)",
-                            onMouseLeave: (e) => e.currentTarget.style.backgroundColor = "var(--background-tertiary)"
-                        },
-                        React.createElement("span", {
-                            style: {
-                                color: "var(--text-normal)",
-                                fontSize: "14px",
-                                fontWeight: "500",
-                                flexGrow: "1"
-                            }
-                        }, `${reminder.text} - ${new Date(reminder.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`),
-                        React.createElement("button", {
-                            style: {
-                                background: "var(--button-secondary-background)",
-                                border: "1px solid var(--button-secondary-border)",
-                                padding: "5px 10px",
-                                borderRadius: "5px",
-                                color: "var(--text-normal)",
-                                cursor: "pointer",
-                                transition: "background-color 0.3s, color 0.3s",
-                                fontSize: "14px"
+                                padding: "12px",
+                                marginBottom: "10px",
+                                backgroundColor: "var(--background-secondary)",
+                                borderRadius: "6px",
+                                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                                transition: "transform 0.2s, opacity 0.2s",
+                                opacity: "1",
+                                transform: "scale(1)"
                             },
                             onMouseEnter: (e) => {
-                                e.target.style.backgroundColor = "var(--button-danger-background)";
-                                e.target.style.color = "var(--text-on-danger)";
+                                e.currentTarget.style.transform = "scale(1.02)";
+                                e.currentTarget.style.opacity = "0.95";
                             },
                             onMouseLeave: (e) => {
-                                e.target.style.backgroundColor = "var(--button-secondary-background)";
-                                e.target.style.color = "var(--text-normal)";
+                                e.currentTarget.style.transform = "scale(1)";
+                                e.currentTarget.style.opacity = "1";
+                            }
+                        },
+                            React.createElement("div", {
+                                style: {
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "4px"
+                                }
                             },
-                            onClick: () => this.deleteReminder(reminder)
-                        }, "Delete")
+                                React.createElement("div", {
+                                    style: {
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "8px"
+                                    }
+                                },
+                                    React.createElement("svg", {
+                                        xmlns: "http://www.w3.org/2000/svg",
+                                        width: "16",
+                                        height: "16",
+                                        fill: "var(--text-muted)",
+                                        viewBox: "0 0 24 24"
+                                    },
+                                        React.createElement("path", {
+                                            d: "M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Zm6.962 4.856a1.475 1.475 0 0 1 1.484.066A1 1 0 1 0 11.53 9.24a3.475 3.475 0 1 0-.187 5.955 1 1 0 1 0-.976-1.746 1.474 1.474 0 1 1-1.405-2.593Zm6.186 0a1.475 1.475 0 0 1 1.484.066 1 1 0 1 0 1.084-1.682 3.475 3.475 0 1 0-.187 5.955 1 1 0 1 0-.976-1.746 1.474 1.474 0 1 1-1.405-2.593Z"
+                                        })
+                                    ),
+                                    React.createElement("span", {
+                                        style: {
+                                            color: "var(--text-normal)",
+                                            fontSize: "16px",
+                                            fontWeight: "500"
+                                        }
+                                    }, reminder.text)
+                                ),
+                                React.createElement("div", {
+                                    style: {
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "8px",
+                                        color: "var(--text-muted)",
+                                        fontSize: "12px"
+                                    }
+                                },
+                                    React.createElement("svg", {
+                                        xmlns: "http://www.w3.org/2000/svg",
+                                        width: "14",
+                                        height: "14",
+                                        fill: "currentColor",
+                                        viewBox: "0 0 24 24"
+                                    },
+                                        React.createElement("path", {
+                                            d: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                        })
+                                    ),
+                                    React.createElement("span", null,
+                                        `${new Date(reminder.time).toLocaleString('en-US', {
+                                            weekday: 'short',
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}${reminder.days.length > 0 ? ` (${reminder.days[0]})` : ''}`
+                                    ),
+                                    reminder.repeatable &&
+                                    React.createElement("span", {
+                                        style: {
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: "4px",
+                                            background: "var(--background-modifier-accent)",
+                                            padding: "2px 6px",
+                                            borderRadius: "4px"
+                                        }
+                                    },
+                                        React.createElement("svg", {
+                                            xmlns: "http://www.w3.org/2000/svg",
+                                            width: "12",
+                                            height: "12",
+                                            fill: "var(--text-muted)",
+                                            viewBox: "0 0 24 24"
+                                        },
+                                            React.createElement("path", {
+                                                d: "M17.133 12.632v-1.8a5.406 5.406 0 0 0-4.154-5.262.955.955 0 0 0 .021-.106V3.1a1 1 0 0 0-2 0v2.364a.955.955 0 0 0 .021.106 5.406 5.406 0 0 0-4.154 5.262v1.8C6.867 15.018 5 15.614 5 16.807 5 17.4 5 18 5.538 18h12.924C19 18 19 17.4 19 16.807c0-1.193-1.867-1.789-1.867-4.175ZM8.823 19a3.453 3.453 0 0 0 6.354 0H8.823Z"
+                                            })
+                                        ),
+                                        `Repeats: ${reminder.repeatCount}/${this.settings.repeatableReminderCount}`
+                                    )
+                                )
+                            ),
+                            React.createElement("div", {
+                                style: {
+                                    display: "flex",
+                                    gap: "8px"
+                                }
+                            },
+                                React.createElement("button", {
+                                    onClick: () => handleDelete(reminder),
+                                    style: {
+                                        background: "var(--button-danger-background)",
+                                        border: "none",
+                                        padding: "6px 12px",
+                                        borderRadius: "4px",
+                                        color: "var(--text-on-danger)",
+                                        cursor: "pointer",
+                                        fontSize: "14px",
+                                        transition: "background-color 0.2s"
+                                    },
+                                    onMouseEnter: (e) => e.target.style.backgroundColor = "var(--button-danger-background-hover)",
+                                    onMouseLeave: (e) => e.target.style.backgroundColor = "var(--button-danger-background)"
+                                },
+                                    React.createElement("svg", {
+                                        xmlns: "http://www.w3.org/2000/svg",
+                                        width: "16",
+                                        height: "16",
+                                        fill: "currentColor",
+                                        viewBox: "0 0 24 24",
+                                        style: { verticalAlign: "middle" }
+                                    },
+                                        React.createElement("path", {
+                                            d: "M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                        })
+                                    ),
+                                    " Delete"
+                                )
+                            )
+                        )
                     )
-                )
             );
         };
     
         UI.showConfirmationModal(
             "Reminder Inbox",
-            React.createElement(ReminderList), {
+            React.createElement(ReminderList),
+            {
                 confirmText: "Close",
-                onConfirm: () => {},
+                cancelText: null,
+                onConfirm: () => {}
             }
         );
     }
-    
 
     updateDiscordTitle() {
         if (this.reminderCount > 0) {
@@ -706,40 +1025,44 @@ class Reminder {
     showChangelog() {
         const changes = [
             {
+                title: "Version 1.4.1",
+                type: "added",
+                items: [
+                    "✨ **Reminder Day:** You can now schedule reminders for specific day of the week! Set the day you want, and your reminder will trigger at the selected time. (Suggested by @zrodevkaan on Discord and TirOFlanc on GitHub)",
+                    "⌨️ **Improved Shortcut Input:** The shortcut input in the settings panel is now more intuitive and user-friendly. **⚠️ Please enter the shortcut in the settings again!**",
+                    "⏰ **Custom Repeat Limit:** You can now set how many times a repeatable reminder should repeat. (Minimum: 3, Maximum: 10)",
+                    "☀️ **First Day of the Week:** Added an option to choose your preferred first day of the week, making it easier to plan and schedule reminders.",
+                    "📥 **Redesigned Reminder Inbox:** Reminder Inbox has been completely overhauled and redesigned for a better experience. You can now view your reminders with more detail, sort them more easily, and there's a confirmation prompt before deleting any reminder.",
+                    "👾 **Improved Code:** Improved the sidebar button code. (Special thanks to [@zrodevkaan/Arven](https://betterdiscord.app/developer/Arven) for the help! 🫂)"
+                ]
+            },
+            {
                 title: "Major Update - Version 1.4",
                 type: "added",
                 items: [
-                    "✨ Default Shortcut: Added 'Shift+R' to open the reminder modal (customizable in settings).",
-                    "🔔 Second Reminder Button: Added a new Reminder button in the left sidebar.",
-                    "📍 Customizable Button Location: New setting to choose where the Reminder button appears—User Area, Sidebar, or Both (default is Both).",
-                    "⌨️ Shortcut Customization: Added an option to customize or change the Reminder shortcut.",
-                    "🎨 UI Enhancements: Updated the colors of various elements for a fresher look.",
-                    "👾 Simplified Reminder Modal: Removed the descriptions in the Reminder Modal for a cleaner, more minimal design. Descriptions are available in the Reminder Guide Modal (accessible via the ? icon).",
-                    "🎨 New Changelog: A cleaner, more organized changelog—just like this one!"
+                    "✨ **Default Shortcut:** Added 'Shift+R' to open the reminder modal (customizable in settings).",
+                    "🔔 **Second Reminder Button:** Added a new Reminder button in the left sidebar.",
+                    "📍 **Customizable Button Location:** New setting to choose where the Reminder button appears—User Area, Sidebar, or Both (default is Both).",
+                    "⌨️ **Shortcut Customization:** Added an option to customize or change the Reminder shortcut.",
+                    "🎨 **UI Enhancements:** Updated the colors of various elements for a fresher look.",
+                    "👾 **Simplified Reminder Modal:** Removed the descriptions in the Reminder Modal for a cleaner, more minimal design. Descriptions are available in the Reminder Guide Modal (accessible via the ? icon).",
+                    "🎨 **New Changelog:** A cleaner, more organized changelog—just like this one!"
                 ]
             }
         ];
-    
+
         const options = {
             title: "Reminder Plugin",
             subtitle: "By DevEvil",
-            changes: changes, 
+            changes: changes,
         };
-    
+
         UI.showChangelogModal({
             title: options.title,
             subtitle: options.subtitle,
-            //blurb: options.blurb,
-            //banner: options.banner,
-            //video: options.video,
-            //poster: options.poster,
-            //footer: options.footer,
             changes: options.changes
         });
-
     }
-    
-
 
     showChangelogIfNeeded() {
         const lastVersion = Data.load("Reminder", "lastVersion");
@@ -752,6 +1075,17 @@ class Reminder {
     getSettingsPanel() {
         return UI.buildSettingsPanel({
             settings: [
+                {
+                    type: "switch",
+                    id: "notificationSound",
+                    name: "Notification Sound",
+                    note: "Enable or disable the notification sound.",
+                    value: this.settings.notificationSound,
+                    onChange: (value) => {
+                        this.settings.notificationSound = value;
+                        this.saveSettings();
+                    }
+                },
                 {
                     type: "radio",
                     id: "buttonLocation",
@@ -766,20 +1100,8 @@ class Reminder {
                     onChange: (value) => {
                         this.settings.buttonLocation = value;
                         this.saveSettings();
-    
                         this.refreshReminderButtons();
                         UI.showToast("Button location updated!", { type: "success" });
-                    }
-                },                
-                {
-                    type: "switch",
-                    id: "notificationSound",
-                    name: "Notification Sound",
-                    note: "Enable or disable the notification sound.",
-                    value: this.settings.notificationSound,
-                    onChange: (value) => {
-                        this.settings.notificationSound = value;
-                        this.saveSettings();
                     }
                 },
                 {
@@ -788,9 +1110,53 @@ class Reminder {
                     name: "Notification Sound URL",
                     note: "MP3 URL for the notification sound. Example: https://www.myinstants.com/media/sounds/discord-notification.mp3",
                     value: this.settings.notificationSoundURL,
-                    placeholder: "Enter custom sound URL",
+                    placeholder: "Enter custom MP3 URL",
                     onChange: (value) => {
                         this.settings.notificationSoundURL = value;
+                        this.saveSettings();
+                    }
+                },
+                {
+                    type: "radio",
+                    id: "firstDayOfWeek",
+                    name: "First Day of Week",
+                    note: "Choose which day starts the week.",
+                    options: [
+                        { name: "Saturday", value: "Saturday" },
+                        { name: "Sunday", value: "Sunday" },
+                        { name: "Monday", value: "Monday" }
+                    ],
+                    value: this.settings.firstDayOfWeek,
+                    onChange: (value) => {
+                        this.settings.firstDayOfWeek = value;
+                        this.saveSettings();
+                        UI.showToast("First day of week updated!", { type: "success" });
+                    }
+                },
+                {
+                    type: "number",
+                    id: "repeatableReminderCount",
+                    name: "Repeatable Reminder Count",
+                    note: "Set the number of times a repeatable reminder will show up at 5-minute intervals unless acknowledged (minimum: 3, maximum: 10).",
+                    value: this.settings.repeatableReminderCount,
+                    min: 3,
+                    max: 10,
+                    step: 1,
+                    onChange: (value) => {
+                        this.settings.repeatableReminderCount = value;
+                        this.saveSettings();
+                        UI.showToast(`Repeatable reminder count updated to ${value}!`, { type: "success" });
+                    }
+                },
+                {
+                    type: "keybind",
+                    id: "reminderShortcut",
+                    name: "Reminder Shortcut",
+                    note: "Set your preferred shortcut to open the reminder modal (e.g., Shift+R, Ctrl+Alt+R).",
+                    value: this.settings.reminderShortcut,
+                    placeholder: "Shift+R",
+                    onChange: (value) => {
+                        this.settings.reminderShortcut = value;
                         this.saveSettings();
                     }
                 },
@@ -807,19 +1173,7 @@ class Reminder {
                         this.settings.reminderInterval = value;
                         this.saveSettings();
                     }
-                },
-                {
-                    type: "text",
-                    id: "reminderShortcut",
-                    name: "Reminder Shortcut",
-                    note: "Set your preferred shortcut to open the reminder modal (e.g., Shift+R, Ctrl+Alt+R).",
-                    value: this.settings.reminderShortcut,
-                    placeholder: "Shift+R",
-                    onChange: (value) => {
-                        this.settings.reminderShortcut = value;
-                        this.saveSettings();
-                    }
-                }                
+                }
             ],
             onChange: (category, id, value) => {
                 UI.showToast(`Updated ${id} to ${value}`, {
@@ -828,7 +1182,6 @@ class Reminder {
             }
         });
     }
-
 }
 
 module.exports = class extends Reminder {
