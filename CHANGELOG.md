@@ -1,3 +1,11 @@
+## Reminder v1.4.1 - April 24, 2025
+- **Reminder Day: You can now schedule reminders for specific day of the week! Set the day you want, and your reminder will trigger at the selected time. (Suggested by @zrodevkaan on Discord and TirOFlanc on GitHub)**
+- **Improved Shortcut Input: The shortcut input in the settings panel is now more intuitive and user-friendly.**
+- **Custom Repeat Limit: You can now set how many times a repeatable reminder should repeat. (Minimum: 3, Maximum: 10)**
+- **First Day of the Week: Added an option to choose your preferred first day of the week, making it easier to plan and schedule reminders.**
+- **Redesigned Reminder Inbox: Reminder Inbox has been completely overhauled and redesigned for a better experience. You can now view your reminders with more detail, sort them more easily, and there's a confirmation prompt before deleting any reminder.**
+- **Improved Code: Improved the sidebar button code. (Special thanks to [@zrodevkaan/Arven](https://betterdiscord.app/developer/Arven) for the help! 🫂)**
+
 ## Reminder v1.4 - April 17, 2025
 - **Default Shortcut: Added 'Shift+R' to open the reminder modal (customizable in settings).**
 - **Second Reminder Button: Added a new Reminder button in the left sidebar.**
