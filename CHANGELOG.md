@@ -1,3 +1,8 @@
+## Reminder v1.4.2 - April 25, 2025
+- **Reminder Inbox Icon: Added an inbox icon to the user panel for quick access to the Reminder Inbox. (Can be hidden from the settings.)**
+- **Categorized Settings: Organized the settings into categories for a cleaner and more intuitive layout.**
+- **Sidebar Button Fix: Fixed an issue where disabling the plugin wouldn't remove the sidebar button.**
+
 ## Reminder v1.4.1 - April 24, 2025
 - **Reminder Day: You can now schedule reminders for specific day of the week! Set the day you want, and your reminder will trigger at the selected time. (Suggested by @zrodevkaan on Discord and TirOFlanc on GitHub)**
 - **Improved Shortcut Input: The shortcut input in the settings panel is now more intuitive and user-friendly.**
