@@ -8,8 +8,7 @@ A BetterDiscord plugin that allows users to create, view, and manage custom remi
 ### 1. Create Custom Reminders ⏲️
 Easily set reminders with custom text and specific times. You can quickly add a reminder for any occasion, ensuring you never miss important events.
 
-![image](https://github.com/user-attachments/assets/127ff4fd-5067-4d1e-851a-9d6b5604a7fb)
-
+![image](https://github.com/user-attachments/assets/acca2947-683a-42e7-b16a-b2299fb3b675)
 
 ### 2. Modal Notifications 🔔
 Receive instant notifications when a reminder is due. **Reminder** plays a notification sound and displays a modal popup, ensuring that you are alerted promptly.
@@ -19,7 +18,7 @@ Receive instant notifications when a reminder is due. **Reminder** plays a notif
 ### 3. Reminder Inbox 📥
 Access all your reminders in one convenient place. **Reminder** integrates a dedicated reminder inbox, where you can view all your upcoming reminders at a glance.
 
-![image](https://github.com/user-attachments/assets/e5f7bc32-8fea-466d-a7a2-a98dc795c20b)
+![image](https://github.com/user-attachments/assets/681963e3-4de7-47a9-b040-2282da84b9e8)
 
 ### 4. Repeatable Reminder 🔁
 This feature repeats your reminders up to 3 times at 5-minute intervals, ensuring you're alerted even if you miss the initial prompt.
@@ -29,7 +28,7 @@ This feature repeats your reminders up to 3 times at 5-minute intervals, ensurin
 ### 5. Customizable ⚙️
 Easily customize and adjust notification sound, button placement, shortcut, and more.
 
-![image](https://github.com/user-attachments/assets/dac5d691-99ec-42a5-baf1-2da6039f535d)
+![image](https://github.com/user-attachments/assets/2f091079-394c-41b9-8c0e-0c5c25a17949)
 
 
 ## Links 🔗
