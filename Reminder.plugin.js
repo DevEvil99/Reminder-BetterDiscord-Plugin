@@ -1,6 +1,6 @@
 /**
  * @name Reminder
- * @version 1.4.1
+ * @version 1.4.2
  * @description A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
  * @author DevEvil
  * @website https://devevil.com
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.4.1",
+        version: "1.4.2",
         description: "A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.",
         authors: [{
             name: "DevEvil",
@@ -55,7 +55,8 @@ class Reminder {
             reminderShortcut: ["Shift", "R"],
             buttonLocation: "both",
             firstDayOfWeek: "Sunday",
-            repeatableReminderCount: 3
+            repeatableReminderCount: 3,
+            showReminderInboxIcon: true
         };
         this.settings = this.loadSettings();
         this.reminders = this.loadReminders();
@@ -63,6 +64,7 @@ class Reminder {
         this.checkInterval = null;
         this.audio = new Audio(this.settings.notificationSoundURL);
         this.reminderCount = 0;
+        this.Days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     }
 
     loadSettings() {
@@ -129,39 +131,46 @@ class Reminder {
         if (!Data.load("Reminder", "settings")) {
             this.saveSettings();
         }
-
+    
         this.keybindHandler = (e) => {
             const keybind = this.settings.reminderShortcut;
             if (!Array.isArray(keybind) || keybind.length === 0) return;
-        
+    
             const keys = keybind.map(k => k.toLowerCase());
-        
+    
             const hasShift = keys.includes("shift");
             const hasCtrl = keys.includes("control") || keys.includes("ctrl");
             const hasAlt = keys.includes("alt");
             const hasMeta = keys.includes("meta") || keys.includes("cmd") || keys.includes("command");
-        
+    
             const mainKey = keys.find(k => !["shift", "control", "ctrl", "alt", "meta", "cmd", "command"].includes(k));
             if (!mainKey) return;
-        
+    
             const match =
                 (!hasShift || e.shiftKey) &&
                 (!hasCtrl || e.ctrlKey) &&
                 (!hasAlt || e.altKey) &&
                 (!hasMeta || e.metaKey) &&
                 e.key.toLowerCase() === mainKey;
-        
+    
             if (match) {
                 e.preventDefault();
                 this.openReminderModal();
             }
         };
-        
+    
         document.addEventListener("keydown", this.keybindHandler);
-
+    
         this.checkReminders();
-        this.addReminderButton();
-        this.addReminderSidebar();
+        if (["userarea", "both"].includes(this.settings.buttonLocation)) {
+            this.addReminderButton();
+        }
+        if (["sidebar", "both"].includes(this.settings.buttonLocation)) {
+            this.addReminderSidebar();
+        }
+        if (this.settings.showReminderInboxIcon) {
+            this.addReminderInboxIcon();
+        }
         this.checkInterval = setInterval(() => this.checkReminders(), this.settings.reminderInterval);
         Patcher.after("Reminder", Webpack.getModule(m => m.default && m.default.displayName === "Inbox"), "default", (_, __, ret) => {
             const Inbox = ret.props.children[1];
@@ -178,38 +187,43 @@ class Reminder {
     stop() {
         Patcher.unpatchAll("Reminder");
         clearInterval(this.checkInterval);
-        const reminderButton = document.querySelector(".reminder-button");
-        if (reminderButton) {
-            reminderButton.parentElement.remove();
-        }
+        document.querySelector(".reminder-button")?.parentElement?.remove();
+        document.querySelector(".reminderInboxIcon")?.remove();
         this.reminderCount = 0;
         this.updateDiscordTitle();
-
+    
         document.removeEventListener("keydown", this.keybindHandler);
-
-        if (this.guildsNavObserver) this.guildsNavObserver.disconnect();
-        document.querySelector('.reminderPluginSideBtn')?.parentElement?.remove();
+    
+        if (this.guildsNavObserver) {
+            this.guildsNavObserver.disconnect();
+            this.guildsNavObserver = null;
+            document.querySelector(".reminderPluginSideBtn")?.parentElement?.remove();
+        }
     }
-
+    
     addReminderButton() {
         if (!["userarea", "both"].includes(this.settings.buttonLocation)) return;
 
         const containerDiv = document.createElement("div");
-        containerDiv.style.display = "flex";
-        containerDiv.style.justifyContent = "space-between";
-        containerDiv.style.alignItems = "center";
-        containerDiv.style.margin = "10px";
+        Object.assign(containerDiv.style, {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            margin: "10px"
+        });
 
         const button = document.createElement("button");
         button.textContent = "Add Reminder";
-        button.style.background = "var(--bg-base-tertiary)";
-        button.style.outline = "none";
-        button.style.border = "none";
-        button.style.padding = "10px";
-        button.style.borderRadius = "10px";
-        button.style.width = "100%";
-        button.style.color = "var(--text-normal)";
-        button.style.cursor = "pointer";
+        Object.assign(button.style, {
+            background: "var(--bg-base-tertiary)",
+            outline: "none",
+            border: "none",
+            padding: "10px",
+            borderRadius: "10px",
+            width: "100%",
+            color: "var(--text-normal)",
+            cursor: "pointer"
+        });
         button.className = "reminder-button";
         button.onclick = () => this.openReminderModal();
 
@@ -222,11 +236,16 @@ class Reminder {
     }
 
     addReminderSidebar() {
-        if (!["sidebar", "both"].includes(this.settings.buttonLocation)) return;
+        if (this.guildsNavObserver) {
+            this.guildsNavObserver.disconnect();
+        }
     
         const observer = new MutationObserver(() => {
             const guildsNav = document.querySelector(`.${Webpack.getByKeys('unreadMentionsIndicatorBottom').itemsContainer}`);
             if (!guildsNav || guildsNav.querySelector('.reminderPluginSideBtn')) return;
+    
+
+            if (!["sidebar", "both"].includes(this.settings.buttonLocation)) return;
     
             const listItem = document.createElement("div");
             listItem.className = Webpack.getByKeys('tutorialContainer').listItem;
@@ -276,13 +295,83 @@ class Reminder {
         observer.observe(document.body, { childList: true, subtree: true });
         this.guildsNavObserver = observer;
     }
+
+    addReminderInboxIcon() {
+        if (!this.settings.showReminderInboxIcon) return;
+
+        const buttonClasses = `${Webpack.getByKeys('plateMuted').button} ${Webpack.getByKeys('plateMuted').enabled} ${Webpack.getByKeys('plateMuted').plated} ${Webpack.getByKeys('colorBrandInverted').button} ${Webpack.getByKeys('colorBrandInverted').lookBlank} ${Webpack.getByKeys('colorBrandInverted').colorBrand} ${Webpack.getByKeys('colorBrandInverted').grow} reminderInboxIcon`;
+        const iconDivClasses = `${Webpack.getByKeys('lottieIcon').lottieIcon} ${Webpack.getByKeys('lottieIcon').lottieIconColors} ${Webpack.getByKeys('avatarWrapper').iconForeground}`;
+
+        const button = document.createElement("button");
+        button.className = buttonClasses;
+        button.onclick = () => this.showAllReminders();
+
+        const contentDiv = document.createElement("div");
+        contentDiv.className = Webpack.getByKeys('colorBrandInverted').contents;
+
+        const iconDiv = document.createElement("div");
+        iconDiv.className = iconDivClasses;
+        Object.assign(iconDiv.style, {
+            '--__lottieIconColor': 'currentColor',
+            display: 'flex',
+            width: '20px',
+            height: '20px'
+        });
+        
+
+        const SVG_NS = "http://www.w3.org/2000/svg";
+
+        const iconSvg = document.createElementNS(SVG_NS, 'svg');
+        Object.assign(iconSvg.style, {
+            width: '100%',
+            height: '100%',
+            contentVisibility: 'visible'
+        });
+        iconSvg.setAttribute('viewBox', '0 0 24 24');
+        iconSvg.setAttribute('width', '24');
+        iconSvg.setAttribute('height', '24');
+        iconSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        iconSvg.setAttribute('xmlns', SVG_NS);
+        iconSvg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+        
+
+        const path = document.createElementNS(SVG_NS, "path");
+        path.setAttribute("d", "M5.024 3.783A1 1 0 0 1 6 3h12a1 1 0 0 1 .976.783L20.802 12h-4.244a1.99 1.99 0 0 0-1.824 1.205 2.978 2.978 0 0 1-5.468 0A1.991 1.991 0 0 0 7.442 12H3.198l1.826-8.217ZM3 14v5a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5h-4.43a4.978 4.978 0 0 1-9.14 0H3Z");
+        path.setAttribute("fill", "currentColor");
+        
+        button.appendChild(contentDiv);
+        contentDiv.appendChild(iconDiv);
+        iconDiv.appendChild(iconSvg);
+        iconSvg.appendChild(path);
+
+        UI.createTooltip(button, "Reminder Inbox", { style: "primary", side: "top" });
+
+        const buttonPanel = document.querySelector(`.${Webpack.getByKeys('avatarWrapper').buttons}`);
+        if (buttonPanel) {
+            buttonPanel.appendChild(button);
+        }
+    }
     
 
     refreshReminderButtons() {
         document.querySelector(".reminder-button")?.parentElement?.remove();
-        document.querySelector(".reminderPluginSideBtn")?.parentElement?.remove();
-        this.addReminderButton();
-        this.addReminderSidebar();
+        document.querySelector(".reminderInboxIcon")?.remove();
+
+        if (this.guildsNavObserver) {
+            this.guildsNavObserver.disconnect();
+            this.guildsNavObserver = null;
+            document.querySelector(".reminderPluginSideBtn")?.parentElement?.remove();
+        }
+
+        if (["userarea", "both"].includes(this.settings.buttonLocation)) {
+            this.addReminderButton();
+        }
+        if (["sidebar", "both"].includes(this.settings.buttonLocation)) {
+            this.addReminderSidebar();
+        }
+        if (this.settings.showReminderInboxIcon) {
+            this.addReminderInboxIcon();
+        }
     }
 
     openHelpModal() {
@@ -384,7 +473,7 @@ class Reminder {
                 selectedDayRef.current = selectedDay;
             }, [selectedDay]);
 
-            const baseDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            const baseDays = this.Days;
             const firstDay = this.settings.firstDayOfWeek || "Sunday";
             const firstDayIndex = baseDays.indexOf(firstDay);
             const daysOfWeek = [
@@ -628,7 +717,7 @@ class Reminder {
                         targetDate.setMilliseconds(0);
 
                         if (selectedDay) {
-                            const dayIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(selectedDay);
+                            const dayIndex = this.Days.indexOf(selectedDay);
                             const currentDayIndex = targetDate.getDay();
                             let daysUntil = (dayIndex - currentDayIndex + 7) % 7;
                             if (daysUntil === 0 && targetDate.getTime() <= Date.now()) {
@@ -700,7 +789,7 @@ class Reminder {
             } else {
                 if (reminder.days.length > 0 && reminder.time < now.getTime()) {
                     let nextDate = new Date();
-                    const dayIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(reminder.days[0]);
+                    const dayIndex = this.Days.indexOf(reminder.days[0]);
                     const currentDayIndex = nextDate.getDay();
                     let daysUntil = (dayIndex - currentDayIndex + 7) % 7;
                     if (daysUntil === 0) daysUntil = 7;
@@ -942,7 +1031,7 @@ class Reminder {
                                                 d: "M17.133 12.632v-1.8a5.406 5.406 0 0 0-4.154-5.262.955.955 0 0 0 .021-.106V3.1a1 1 0 0 0-2 0v2.364a.955.955 0 0 0 .021.106 5.406 5.406 0 0 0-4.154 5.262v1.8C6.867 15.018 5 15.614 5 16.807 5 17.4 5 18 5.538 18h12.924C19 18 19 17.4 19 16.807c0-1.193-1.867-1.789-1.867-4.175ZM8.823 19a3.453 3.453 0 0 0 6.354 0H8.823Z"
                                             })
                                         ),
-                                        `Repeats: ${reminder.repeatCount}/${this.settings.repeatableReminderCount}`
+                                        `Repeats: ${(reminder.repeatCount ?? 1) - 1}/${this.settings.repeatableReminderCount}`
                                     )
                                 )
                             ),
@@ -1025,10 +1114,19 @@ class Reminder {
     showChangelog() {
         const changes = [
             {
+                title: "Version 1.4.2",
+                type: "progress",
+                items: [
+                    "✨ **Reminder Inbox Icon:** Added an inbox icon to the user panel for quick access to the Reminder Inbox. (Can be hidden from the settings.)",
+                    "📂 **Categorized Settings:** Organized the settings into categories for a cleaner and more intuitive layout.",
+                    "🔧 **Sidebar Button Fix:** Fixed an issue where disabling the plugin wouldn't remove the sidebar button."
+                ]
+            },
+            {
                 title: "Version 1.4.1",
                 type: "added",
                 items: [
-                    "✨ **Reminder Day:** You can now schedule reminders for specific day of the week! Set the day you want, and your reminder will trigger at the selected time. (Suggested by @zrodevkaan on Discord and TirOFlanc on GitHub)",
+                    "✨ **Reminder Day:** You can now schedule reminders for a specific day of the week! Set the day you want, and your reminder will trigger at the selected time. (Suggested by @zrodevkaan on Discord and TirOFlanc on GitHub)",
                     "⌨️ **Improved Shortcut Input:** The shortcut input in the settings panel is now more intuitive and user-friendly. **⚠️ Please enter the shortcut in the settings again!**",
                     "⏰ **Custom Repeat Limit:** You can now set how many times a repeatable reminder should repeat. (Minimum: 3, Maximum: 10)",
                     "☀️ **First Day of the Week:** Added an option to choose your preferred first day of the week, making it easier to plan and schedule reminders.",
@@ -1060,6 +1158,7 @@ class Reminder {
         UI.showChangelogModal({
             title: options.title,
             subtitle: options.subtitle,
+            blurb: "Unemployment is dangerous. One of the side effects? Releasing plugin updates literally every single day. Stay employed, stay safe 😅",
             changes: options.changes
         });
     }
@@ -1076,107 +1175,143 @@ class Reminder {
         return UI.buildSettingsPanel({
             settings: [
                 {
-                    type: "switch",
-                    id: "notificationSound",
-                    name: "Notification Sound",
-                    note: "Enable or disable the notification sound.",
-                    value: this.settings.notificationSound,
-                    onChange: (value) => {
-                        this.settings.notificationSound = value;
-                        this.saveSettings();
-                    }
+                    type: "category",
+                    id: "notification_options",
+                    name: "Notification Settings",
+                    collapsible: true,
+                    shown: true,
+                    settings: [
+                        {
+                            type: "switch",
+                            id: "notificationSound",
+                            name: "Notification Sound",
+                            note: "Enable or disable the notification sound.",
+                            value: this.settings.notificationSound,
+                            onChange: (value) => {
+                                this.settings.notificationSound = value;
+                                this.saveSettings();
+                            }
+                        },
+                        {
+                            type: "text",
+                            id: "notificationSoundURL",
+                            name: "Notification Sound URL",
+                            note: "MP3 URL for the notification sound. Example: https://www.myinstants.com/media/sounds/discord-notification.mp3",
+                            value: this.settings.notificationSoundURL,
+                            placeholder: "Enter custom MP3 URL",
+                            onChange: (value) => {
+                                this.settings.notificationSoundURL = value;
+                                this.saveSettings();
+                            }
+                        }
+                    ]
                 },
                 {
-                    type: "radio",
-                    id: "buttonLocation",
-                    name: "Reminder Button Location",
-                    note: "Choose where the Reminder button should appear.",
-                    options: [
-                        { name: "User Area", value: "userarea" },
-                        { name: "Sidebar", value: "sidebar" },
-                        { name: "Both", value: "both" }
-                    ],
-                    value: this.settings.buttonLocation,
-                    onChange: (value) => {
-                        this.settings.buttonLocation = value;
-                        this.saveSettings();
-                        this.refreshReminderButtons();
-                        UI.showToast("Button location updated!", { type: "success" });
-                    }
+                    type: "category",
+                    id: "ui_options",
+                    name: "UI Settings",
+                    collapsible: true,
+                    shown: false,
+                    settings: [
+                        {
+                            type: "switch",
+                            id: "showReminderInboxIcon",
+                            name: "Show Reminder Inbox Icon",
+                            note: "Show or hide the Reminder Inbox icon in the user panel.",
+                            value: this.settings.showReminderInboxIcon,
+                            onChange: (value) => {
+                                this.settings.showReminderInboxIcon = value;
+                                this.saveSettings();
+                                this.refreshReminderButtons();
+                            }
+                        },
+                        {
+                            type: "radio",
+                            id: "buttonLocation",
+                            name: "Reminder Button Location",
+                            note: "Choose where the Reminder button should appear.",
+                            options: [
+                                { name: "User Area", value: "userarea" },
+                                { name: "Sidebar", value: "sidebar" },
+                                { name: "Both", value: "both" }
+                            ],
+                            value: this.settings.buttonLocation,
+                            onChange: (value) => {
+                                this.settings.buttonLocation = value;
+                                this.saveSettings();
+                                this.refreshReminderButtons();
+                            }
+                        },
+                        {
+                            type: "radio",
+                            id: "firstDayOfWeek",
+                            name: "First Day of Week",
+                            note: "Choose which day starts the week.",
+                            options: [
+                                { name: "Saturday", value: "Saturday" },
+                                { name: "Sunday", value: "Sunday" },
+                                { name: "Monday", value: "Monday" }
+                            ],
+                            value: this.settings.firstDayOfWeek,
+                            onChange: (value) => {
+                                this.settings.firstDayOfWeek = value;
+                                this.saveSettings();
+                            }
+                        }
+                    ]
                 },
                 {
-                    type: "text",
-                    id: "notificationSoundURL",
-                    name: "Notification Sound URL",
-                    note: "MP3 URL for the notification sound. Example: https://www.myinstants.com/media/sounds/discord-notification.mp3",
-                    value: this.settings.notificationSoundURL,
-                    placeholder: "Enter custom MP3 URL",
-                    onChange: (value) => {
-                        this.settings.notificationSoundURL = value;
-                        this.saveSettings();
-                    }
-                },
-                {
-                    type: "radio",
-                    id: "firstDayOfWeek",
-                    name: "First Day of Week",
-                    note: "Choose which day starts the week.",
-                    options: [
-                        { name: "Saturday", value: "Saturday" },
-                        { name: "Sunday", value: "Sunday" },
-                        { name: "Monday", value: "Monday" }
-                    ],
-                    value: this.settings.firstDayOfWeek,
-                    onChange: (value) => {
-                        this.settings.firstDayOfWeek = value;
-                        this.saveSettings();
-                        UI.showToast("First day of week updated!", { type: "success" });
-                    }
-                },
-                {
-                    type: "number",
-                    id: "repeatableReminderCount",
-                    name: "Repeatable Reminder Count",
-                    note: "Set the number of times a repeatable reminder will show up at 5-minute intervals unless acknowledged (minimum: 3, maximum: 10).",
-                    value: this.settings.repeatableReminderCount,
-                    min: 3,
-                    max: 10,
-                    step: 1,
-                    onChange: (value) => {
-                        this.settings.repeatableReminderCount = value;
-                        this.saveSettings();
-                        UI.showToast(`Repeatable reminder count updated to ${value}!`, { type: "success" });
-                    }
-                },
-                {
-                    type: "keybind",
-                    id: "reminderShortcut",
-                    name: "Reminder Shortcut",
-                    note: "Set your preferred shortcut to open the reminder modal (e.g., Shift+R, Ctrl+Alt+R).",
-                    value: this.settings.reminderShortcut,
-                    placeholder: "Shift+R",
-                    onChange: (value) => {
-                        this.settings.reminderShortcut = value;
-                        this.saveSettings();
-                    }
-                },
-                {
-                    type: "number",
-                    id: "reminderInterval",
-                    name: "Reminder Check Interval (ms)",
-                    note: "This setting controls how often (in milliseconds) the plugin checks for upcoming reminders. The default interval is 1 minute (60000 milliseconds). Shorter intervals provide more frequent checks but may use more system resources.",
-                    value: this.settings.reminderInterval,
-                    min: 10000,
-                    max: 300000,
-                    step: 5000,
-                    onChange: (value) => {
-                        this.settings.reminderInterval = value;
-                        this.saveSettings();
-                    }
+                    type: "category",
+                    id: "advanced_options",
+                    name: "Advanced Settings",
+                    collapsible: true,
+                    shown: false,
+                    settings: [
+                        {
+                            type: "number",
+                            id: "repeatableReminderCount",
+                            name: "Repeatable Reminder Count",
+                            note: "Set the number of times a repeatable reminder will show up at 5-minute intervals unless acknowledged (minimum: 3, maximum: 10).",
+                            value: this.settings.repeatableReminderCount,
+                            min: 3,
+                            max: 10,
+                            step: 1,
+                            onChange: (value) => {
+                                this.settings.repeatableReminderCount = value;
+                                this.saveSettings();
+                            }
+                        },
+                        {
+                            type: "keybind",
+                            id: "reminderShortcut",
+                            name: "Reminder Shortcut",
+                            note: "Set your preferred shortcut to open the reminder modal (e.g., Shift+R, Ctrl+Alt+R).",
+                            value: this.settings.reminderShortcut,
+                            placeholder: "Shift+R",
+                            onChange: (value) => {
+                                this.settings.reminderShortcut = value;
+                                this.saveSettings();
+                            }
+                        },
+                        {
+                            type: "number",
+                            id: "reminderInterval",
+                            name: "Reminder Check Interval (ms)",
+                            note: "This setting controls how often (in milliseconds) the plugin checks for upcoming reminders. The default interval is 1 minute (60000 milliseconds). Shorter intervals provide more frequent checks but may use more system resources.",
+                            value: this.settings.reminderInterval,
+                            min: 10000,
+                            max: 300000,
+                            step: 5000,
+                            onChange: (value) => {
+                                this.settings.reminderInterval = value;
+                                this.saveSettings();
+                            }
+                        }
+                    ]
                 }
             ],
-            onChange: (category, id, value) => {
-                UI.showToast(`Updated ${id} to ${value}`, {
+            onChange: (category, id, name, value) => {
+                UI.showToast(`Updated ${id}!`, {
                     type: "success"
                 });
             }
