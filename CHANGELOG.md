@@ -1,3 +1,6 @@
+## Reminder v1.4.3 - April 26, 2025
+- **Sidebar Button Style: Fixed a styling issue that caused the sidebar button to be off-center.**
+
 ## Reminder v1.4.2 - April 25, 2025
 - **Reminder Inbox Icon: Added an inbox icon to the user panel for quick access to the Reminder Inbox. (Can be hidden from the settings.)**
 - **Categorized Settings: Organized the settings into categories for a cleaner and more intuitive layout.**
