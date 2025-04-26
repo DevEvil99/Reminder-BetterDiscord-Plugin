@@ -1,6 +1,6 @@
 /**
  * @name Reminder
- * @version 1.4.2
+ * @version 1.4.3
  * @description A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
  * @author DevEvil
  * @website https://devevil.com
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.4.2",
+        version: "1.4.3",
         description: "A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.",
         authors: [{
             name: "DevEvil",
@@ -253,7 +253,8 @@ class Reminder {
             const listItemWrapper = document.createElement("div");
             listItemWrapper.className = `${Webpack.getByKeys('listItemWrapper').listItemWrapper} reminderWrapper`;
     
-            listItemWrapper.style.marginLeft = '20px';
+            listItemWrapper.style.display = 'flex';
+            listItemWrapper.style.justifyContent = 'center';
     
             const wrapper = document.createElement("div");
             wrapper.className = `${Webpack.getByKeys('wrapperSimple').wrapper} reminderPluginSideBtn`;
@@ -1114,6 +1115,13 @@ class Reminder {
     showChangelog() {
         const changes = [
             {
+                title: "Version 1.4.3",
+                type: "fixed",
+                items: [
+                    "✨ **Sidebar Button Style:** Fixed a styling issue that caused the sidebar button to be off-center."
+                ]
+            },
+            {
                 title: "Version 1.4.2",
                 type: "progress",
                 items: [
@@ -1158,7 +1166,6 @@ class Reminder {
         UI.showChangelogModal({
             title: options.title,
             subtitle: options.subtitle,
-            blurb: "Unemployment is dangerous. One of the side effects? Releasing plugin updates literally every single day. Stay employed, stay safe 😅",
             changes: options.changes
         });
     }
@@ -1322,9 +1329,5 @@ class Reminder {
 module.exports = class extends Reminder {
     constructor() {
         super();
-    }
-
-    load() {
-        this.showChangelogIfNeeded();
     }
 };
