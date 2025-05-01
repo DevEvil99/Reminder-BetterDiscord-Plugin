@@ -1,6 +1,6 @@
 /**
  * @name Reminder
- * @version 1.4.3
+ * @version 1.4.4
  * @description A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
  * @author DevEvil
  * @website https://devevil.com
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.4.3",
+        version: "1.4.4",
         description: "A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.",
         authors: [{
             name: "DevEvil",
@@ -257,10 +257,10 @@ class Reminder {
             listItemWrapper.style.justifyContent = 'center';
     
             const wrapper = document.createElement("div");
-            wrapper.className = `${Webpack.getByKeys('wrapperSimple').wrapper} reminderPluginSideBtn`;
+            wrapper.className = `${Webpack.getByKeys('lowerBadge').wrapper} reminderPluginSideBtn`;
     
             wrapper.innerHTML = `
-            <svg width="48" height="48" viewBox="-4 -4 48 48" class="${Webpack.getByKeys('wrapperSimple').svg}" overflow="visible" style="cursor: pointer;">
+            <svg width="48" height="48" viewBox="-4 -4 48 48" overflow="visible" style="cursor: pointer;">
                 <defs>
                     <path d="M0 17.4545C0 11.3449 0 8.29005 1.18902 5.95647C2.23491 3.90379 3.90379 2.23491 5.95647 1.18902C8.29005 0 11.3449 0 17.4545 0H22.5455C28.6551 0 31.71 0 34.0435 1.18902C36.0962 2.23491 37.7651 3.90379 38.811 5.95647C40 8.29005 40 11.3449 40 17.4545V22.5455C40 28.6551 40 31.71 38.811 34.0435C37.7651 36.0962 36.0962 37.7651 34.0435 38.811C31.71 40 28.6551 40 22.5455 40H17.4545C11.3449 40 8.29005 40 5.95647 38.811C3.90379 37.7651 2.23491 36.0962 1.18902 34.0435C0 31.71 0 28.6551 0 22.5455V17.4545Z" id="reminder-blob-mask"></path>
                 </defs>
@@ -1115,6 +1115,13 @@ class Reminder {
     showChangelog() {
         const changes = [
             {
+                title: "Version 1.4.4",
+                type: "fixed",
+                items: [
+                    "✨ **Sidebar Button Fix:** Fixed an issue that caused the sidebar button to not show up."
+                ]
+            },
+            {
                 title: "Version 1.4.3",
                 type: "fixed",
                 items: [
@@ -1294,7 +1301,6 @@ class Reminder {
                             name: "Reminder Shortcut",
                             note: "Set your preferred shortcut to open the reminder modal (e.g., Shift+R, Ctrl+Alt+R).",
                             value: this.settings.reminderShortcut,
-                            placeholder: "Shift+R",
                             onChange: (value) => {
                                 this.settings.reminderShortcut = value;
                                 this.saveSettings();
