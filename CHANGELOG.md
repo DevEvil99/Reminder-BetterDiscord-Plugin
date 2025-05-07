@@ -1,3 +1,6 @@
+## Reminder v1.4.4 - May 2, 2025
+- **Sidebar Button Fix: Fixed an issue that caused the sidebar button to not show up.**
+
 ## Reminder v1.4.3 - April 26, 2025
 - **Sidebar Button Style: Fixed a styling issue that caused the sidebar button to be off-center.**
 
