@@ -1,6 +1,6 @@
 /**
  * @name Reminder
- * @version 1.4.4
+ * @version 1.4.5
  * @description A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
  * @author DevEvil
  * @website https://devevil.com
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.4.4",
+        version: "1.4.5",
         description: "A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.",
         authors: [{
             name: "DevEvil",
@@ -440,6 +440,14 @@ class Reminder {
                             marginBottom: "10px"
                         }
                     },
+                        React.createElement("strong", null, "Reminder Date:"),
+                        " Schedule reminders for a specific date! Set the date you want, and your reminder will trigger at the selected time."
+                    ),
+                    React.createElement("li", {
+                        style: {
+                            marginBottom: "10px"
+                        }
+                    },
                         React.createElement("strong", null, "Repeatable Reminder:"),
                         ` Repeats reminders up to ${this.settings.repeatableReminderCount} times (set in settings, default 3) at 5-minute intervals unless acknowledged (by pressing 'OK').`
                     )
@@ -459,20 +467,34 @@ class Reminder {
         const { React } = BdApi;
 
         const selectedDayRef = { current: "" };
+        const selectedDateRef = { current: "" };
 
         const ModalContent = () => {
             const [reminderText, setReminderText] = React.useState("");
             const [reminderTime, setReminderTime] = React.useState("");
             const [repeatable, setRepeatable] = React.useState(false);
             const [selectedDay, setSelectedDay] = React.useState("");
+            const [selectedDate, setSelectedDate] = React.useState("");
 
             const selectDay = (day) => {
-                setSelectedDay(day);
+                if (selectedDay === day) {
+                    setSelectedDay("");
+                } else {
+                    setSelectedDay(day);
+                    setSelectedDate("");
+                }
+            };
+            const selectDate = (date) => {
+                setSelectedDate(date);
+                if (date) setSelectedDay(""); 
             };
 
             React.useEffect(() => {
                 selectedDayRef.current = selectedDay;
             }, [selectedDay]);
+            React.useEffect(() => {
+                selectedDateRef.current = selectedDate;
+            }, [selectedDate]);
 
             const baseDays = this.Days;
             const firstDay = this.settings.firstDayOfWeek || "Sunday";
@@ -584,17 +606,47 @@ class Reminder {
                             React.createElement("button", {
                                 key: day,
                                 onClick: () => selectDay(day),
+                                disabled: !!selectedDate,
                                 style: {
                                     padding: "5px 10px",
                                     borderRadius: "5px",
                                     border: selectedDay === day ? "2px solid var(--brand-experiment)" : "1px solid var(--background-modifier-accent)",
                                     background: selectedDay === day ? "var(--background-modifier-selected)" : "var(--bg-base-tertiary)",
-                                    color: "var(--text-normal)",
-                                    cursor: "pointer"
+                                    color: !!selectedDate ? "var(--text-muted)" : "var(--text-normal)",
+                                    cursor: !!selectedDate ? "not-allowed" : "pointer"
                                 }
                             }, day.slice(0, 3))
                         )
                     )
+                ),
+                React.createElement("div", {
+                        style: {
+                            marginBottom: "15px"
+                        }
+                    },
+                    React.createElement("h4", {
+                        style: {
+                            color: "var(--header-primary)",
+                            marginBottom: "5px"
+                        }
+                    }, "Reminder Date (Optional)"),
+                    React.createElement("input", {
+                        type: "date",
+                        id: "reminderDate",
+                        value: selectedDate,
+                        onChange: (e) => selectDate(e.target.value),
+                        disabled: !!selectedDay,
+                        style: {
+                            background: "var(--bg-base-tertiary)",
+                            outline: "none",
+                            border: "none",
+                            padding: "10px",
+                            borderRadius: "10px",
+                            width: "95%",
+                            color: !!selectedDay ? "var(--text-muted)" : "var(--header-primary)",
+                            cursor: !!selectedDay ? "not-allowed" : "pointer"
+                        }
+                    })
                 ),
                 React.createElement("div", {
                         style: {
@@ -708,6 +760,7 @@ class Reminder {
                     const reminderTime = document.getElementById("reminderTime").value;
                     const repeatable = document.getElementById("repeatable").checked;
                     const selectedDay = selectedDayRef.current;
+                    const selectedDate = selectedDateRef.current;
 
                     if (reminderText && reminderTime) {
                         const [hours, minutes] = reminderTime.split(":");
@@ -717,7 +770,11 @@ class Reminder {
                         targetDate.setSeconds(0);
                         targetDate.setMilliseconds(0);
 
-                        if (selectedDay) {
+                        if (selectedDate) {
+                            const [year, month, day] = selectedDate.split("-");
+                            targetDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
+                            this.addReminder(reminderText, targetDate, repeatable, [], selectedDate);
+                        } else if (selectedDay) {
                             const dayIndex = this.Days.indexOf(selectedDay);
                             const currentDayIndex = targetDate.getDay();
                             let daysUntil = (dayIndex - currentDayIndex + 7) % 7;
@@ -725,11 +782,13 @@ class Reminder {
                                 daysUntil = 7;
                             }
                             targetDate.setDate(targetDate.getDate() + daysUntil);
+                            this.addReminder(reminderText, targetDate, repeatable, [selectedDay], null);
                         } else if (targetDate.getTime() <= Date.now()) {
                             targetDate.setDate(targetDate.getDate() + 1);
+                            this.addReminder(reminderText, targetDate, repeatable, [], null);
+                        } else {
+                            this.addReminder(reminderText, targetDate, repeatable, [], null);
                         }
-
-                        this.addReminder(reminderText, targetDate, repeatable, selectedDay ? [selectedDay] : []);
                         UI.showToast("Your reminder has been set and will alert you at the specified time.", {
                             type: "success"
                         });
@@ -743,14 +802,15 @@ class Reminder {
         );
     }
 
-    addReminder(text, time, repeatable, days = []) {
+    addReminder(text, time, repeatable, days = [], date = null) {
         const reminder = {
             id: Date.now() + Math.random(),
             text,
             time: typeof time === "number" ? time : time.getTime(),
             repeatable,
             repeatCount: 0,
-            days
+            days,
+            date
         };
         this.reminders.push(reminder);
         this.saveReminders();
@@ -770,13 +830,21 @@ class Reminder {
         this.reminders.forEach(reminder => {
             const reminderDate = new Date(reminder.time);
             const today = now.toLocaleString('en-US', { weekday: 'long' });
+            const todayDateStr = now.toISOString().slice(0, 10);
     
             const isDue = reminder.time <= now.getTime() &&
                           now.getTime() - reminder.time <= this.settings.reminderInterval;
     
-            const isDayMatch = reminder.days.length === 0 || reminder.days.includes(today);
+            let isMatch = false;
+            if (reminder.date) {
+                isMatch = reminder.date === todayDateStr;
+            } else if (reminder.days && reminder.days.length > 0) {
+                isMatch = reminder.days.includes(today);
+            } else {
+                isMatch = true;
+            }
     
-            if (isDue && isDayMatch && !this.acknowledgedReminders[reminder.id]) {
+            if (isDue && isMatch && !this.acknowledgedReminders[reminder.id]) {
                 this.showModal(reminder);
     
                 if (reminder.repeatable && reminder.repeatCount < this.settings.repeatableReminderCount) {
@@ -788,7 +856,7 @@ class Reminder {
                     this.acknowledgedReminders[reminder.id] = true;
                 }
             } else {
-                if (reminder.days.length > 0 && reminder.time < now.getTime()) {
+                if (!reminder.date && reminder.days && reminder.days.length > 0 && reminder.time < now.getTime()) {
                     let nextDate = new Date();
                     const dayIndex = this.Days.indexOf(reminder.days[0]);
                     const currentDayIndex = nextDate.getDay();
@@ -1115,6 +1183,14 @@ class Reminder {
     showChangelog() {
         const changes = [
             {
+                title: "Version 1.4.5",
+                type: "added",
+                items: [
+                    "📅 **Reminder Date:** You can now set reminders for a specific date using a calendar input. Only one of \"Reminder Day\" or \"Reminder Date\" can be selected at a time. (Suggested by TirOFlanc on GitHub)",
+                    "🖱️ **Day Toggle:** Clicking the selected day again will now deselect it.",
+                ]
+            },
+            {
                 title: "Version 1.4.4",
                 type: "fixed",
                 items: [
@@ -1147,19 +1223,6 @@ class Reminder {
                     "☀️ **First Day of the Week:** Added an option to choose your preferred first day of the week, making it easier to plan and schedule reminders.",
                     "📥 **Redesigned Reminder Inbox:** Reminder Inbox has been completely overhauled and redesigned for a better experience. You can now view your reminders with more detail, sort them more easily, and there's a confirmation prompt before deleting any reminder.",
                     "👾 **Improved Code:** Improved the sidebar button code. (Special thanks to [@zrodevkaan/Arven](https://betterdiscord.app/developer/Arven) for the help! 🫂)"
-                ]
-            },
-            {
-                title: "Major Update - Version 1.4",
-                type: "added",
-                items: [
-                    "✨ **Default Shortcut:** Added 'Shift+R' to open the reminder modal (customizable in settings).",
-                    "🔔 **Second Reminder Button:** Added a new Reminder button in the left sidebar.",
-                    "📍 **Customizable Button Location:** New setting to choose where the Reminder button appears—User Area, Sidebar, or Both (default is Both).",
-                    "⌨️ **Shortcut Customization:** Added an option to customize or change the Reminder shortcut.",
-                    "🎨 **UI Enhancements:** Updated the colors of various elements for a fresher look.",
-                    "👾 **Simplified Reminder Modal:** Removed the descriptions in the Reminder Modal for a cleaner, more minimal design. Descriptions are available in the Reminder Guide Modal (accessible via the ? icon).",
-                    "🎨 **New Changelog:** A cleaner, more organized changelog—just like this one!"
                 ]
             }
         ];
