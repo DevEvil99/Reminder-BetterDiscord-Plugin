@@ -1224,6 +1224,19 @@ class Reminder {
                     "📥 **Redesigned Reminder Inbox:** Reminder Inbox has been completely overhauled and redesigned for a better experience. You can now view your reminders with more detail, sort them more easily, and there's a confirmation prompt before deleting any reminder.",
                     "👾 **Improved Code:** Improved the sidebar button code. (Special thanks to [@zrodevkaan/Arven](https://betterdiscord.app/developer/Arven) for the help! 🫂)"
                 ]
+            },
+            {
+                title: "Major Update - Version 1.4",
+                type: "added",
+                items: [
+                    "✨ **Default Shortcut:** Added 'Shift+R' to open the reminder modal (customizable in settings).",
+                    "🔔 **Second Reminder Button:** Added a new Reminder button in the left sidebar.",
+                    "📍 **Customizable Button Location:** New setting to choose where the Reminder button appears—User Area, Sidebar, or Both (default is Both).",
+                    "⌨️ **Shortcut Customization:** Added an option to customize or change the Reminder shortcut.",
+                    "🎨 **UI Enhancements:** Updated the colors of various elements for a fresher look.",
+                    "👾 **Simplified Reminder Modal:** Removed the descriptions in the Reminder Modal for a cleaner, more minimal design. Descriptions are available in the Reminder Guide Modal (accessible via the ? icon).",
+                    "🎨 **New Changelog:** A cleaner, more organized changelog—just like this one!"
+                ]
             }
         ];
 
