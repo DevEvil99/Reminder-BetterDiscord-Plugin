@@ -1,7 +1,7 @@
 /**
  * @name Reminder
- * @version 1.4.5
- * @description A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.
+ * @version 1.5
+ * @description A BetterDiscord plugin that lets you create, view, and manage custom reminders and schedules with notification support.
  * @author DevEvil
  * @website https://devevil.com
  * @invite jsQ9UP7kCA
@@ -14,8 +14,8 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.4.5",
-        description: "A BetterDiscord plugin that allows users to create, view, and manage custom reminders with notification support.",
+        version: "1.5",
+        description: "A BetterDiscord plugin that lets you create, view, and manage custom reminders and schedules with notification support.",
         authors: [{
             name: "DevEvil",
             discord_id: "468132563714703390",
@@ -53,10 +53,14 @@ class Reminder {
             notificationSoundURL: "https://devevil99.github.io/devevil/files/Discord-Notification.mp3",
             reminderInterval: 60000,
             reminderShortcut: ["Shift", "R"],
+            reminderInboxShortcut: ["Shift", "I"],
+            scheduleManagerShortcut: ["Shift", "S"],
             buttonLocation: "both",
             firstDayOfWeek: "Sunday",
             repeatableReminderCount: 3,
-            showReminderInboxIcon: true
+            showReminderInboxIcon: true,
+            showScheduleManagerButton: true,
+            schedules: []
         };
         this.settings = this.loadSettings();
         this.reminders = this.loadReminders();
@@ -133,35 +137,42 @@ class Reminder {
         }
     
         this.keybindHandler = (e) => {
-            const keybind = this.settings.reminderShortcut;
-            if (!Array.isArray(keybind) || keybind.length === 0) return;
-    
-            const keys = keybind.map(k => k.toLowerCase());
-    
-            const hasShift = keys.includes("shift");
-            const hasCtrl = keys.includes("control") || keys.includes("ctrl");
-            const hasAlt = keys.includes("alt");
-            const hasMeta = keys.includes("meta") || keys.includes("cmd") || keys.includes("command");
-    
-            const mainKey = keys.find(k => !["shift", "control", "ctrl", "alt", "meta", "cmd", "command"].includes(k));
-            if (!mainKey) return;
-    
-            const match =
-                (!hasShift || e.shiftKey) &&
-                (!hasCtrl || e.ctrlKey) &&
-                (!hasAlt || e.altKey) &&
-                (!hasMeta || e.metaKey) &&
-                e.key.toLowerCase() === mainKey;
-    
-            if (match) {
+            const checkKeybind = (keybind) => {
+                if (!Array.isArray(keybind) || keybind.length === 0) return false;
+                
+                const keys = keybind.map(k => k.toLowerCase());
+                
+                const hasShift = keys.includes("shift");
+                const hasCtrl = keys.includes("control") || keys.includes("ctrl");
+                const hasAlt = keys.includes("alt");
+                const hasMeta = keys.includes("meta") || keys.includes("cmd") || keys.includes("command");
+                
+                const mainKey = keys.find(k => !["shift", "control", "ctrl", "alt", "meta", "cmd", "command"].includes(k));
+                if (!mainKey) return false;
+                
+                return (!hasShift || e.shiftKey) &&
+                       (!hasCtrl || e.ctrlKey) &&
+                       (!hasAlt || e.altKey) &&
+                       (!hasMeta || e.metaKey) &&
+                       e.key.toLowerCase() === mainKey;
+            };
+
+            if (checkKeybind(this.settings.reminderShortcut)) {
                 e.preventDefault();
                 this.openReminderModal();
+            } else if (checkKeybind(this.settings.reminderInboxShortcut)) {
+                e.preventDefault();
+                this.showAllReminders();
+            } else if (checkKeybind(this.settings.scheduleManagerShortcut)) {
+                e.preventDefault();
+                this.openScheduleManager();
             }
         };
     
         document.addEventListener("keydown", this.keybindHandler);
     
         this.checkReminders();
+        this.checkSchedules();
         if (["userarea", "both"].includes(this.settings.buttonLocation)) {
             this.addReminderButton();
         }
@@ -171,7 +182,10 @@ class Reminder {
         if (this.settings.showReminderInboxIcon) {
             this.addReminderInboxIcon();
         }
-        this.checkInterval = setInterval(() => this.checkReminders(), this.settings.reminderInterval);
+        this.checkInterval = setInterval(() => {
+            this.checkReminders();
+            this.checkSchedules();
+        }, this.settings.reminderInterval);
         Patcher.after("Reminder", Webpack.getModule(m => m.default && m.default.displayName === "Inbox"), "default", (_, __, ret) => {
             const Inbox = ret.props.children[1];
             const original = Inbox.type;
@@ -209,7 +223,15 @@ class Reminder {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            margin: "10px"
+            margin: "10px",
+            gap: "10px"
+        });
+
+        const buttonContainer = document.createElement("div");
+        Object.assign(buttonContainer.style, {
+            display: "flex",
+            gap: "10px",
+            flex: 1
         });
 
         const button = document.createElement("button");
@@ -220,14 +242,40 @@ class Reminder {
             border: "none",
             padding: "10px",
             borderRadius: "10px",
-            width: "100%",
+            flex: 1,
             color: "var(--text-normal)",
             cursor: "pointer"
         });
         button.className = "reminder-button";
         button.onclick = () => this.openReminderModal();
 
-        containerDiv.appendChild(button);
+        buttonContainer.appendChild(button);
+
+        if (this.settings.showScheduleManagerButton) {
+            const scheduleButton = document.createElement("button");
+            Object.assign(scheduleButton.style, {
+                background: "none",
+                outline: "none",
+                border: "none",
+                padding: "10px",
+                color: "var(--text-normal)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+            });
+            scheduleButton.className = "schedule-manager-button";
+            scheduleButton.onclick = () => this.openScheduleManager();
+            scheduleButton.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 4h-1V3c0-.55-.45-1-1-1s-1 .45-1 1v1H8V3c0-.55-.45-1-1-1s-1 .45-1 1v1H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM9 14H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm-8 4H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2z"/>
+                </svg>
+            `;
+            UI.createTooltip(scheduleButton, "Schedule Manager", { style: "primary", side: "top" });
+            buttonContainer.appendChild(scheduleButton);
+        }
+
+        containerDiv.appendChild(buttonContainer);
 
         const panel = document.querySelector(`.${Webpack.getByKeys('panels').panels}`);
         if (panel) {
@@ -383,7 +431,8 @@ class Reminder {
                 React.createElement("h4", {
                     style: {
                         color: "var(--header-primary)",
-                        marginBottom: "10px"
+                        marginBottom: "10px",
+                        fontWeight: "bold"
                     }
                 }, "How to Add a Reminder"),
                 React.createElement("ul", {
@@ -417,7 +466,63 @@ class Reminder {
                 React.createElement("h4", {
                     style: {
                         color: "var(--header-primary)",
+                        marginTop: "30px",
+                        marginBottom: "10px",
+                        fontWeight: "bold"
+                    }
+                }, "Schedule Manager"),
+                React.createElement("p", {
+                    style: {
+                        color: "var(--text-normal)",
                         marginBottom: "10px"
+                    }
+                }, "The Schedule Manager allows you to create recurring reminders with flexible scheduling options:"),
+                React.createElement("ul", {
+                    style: {
+                        color: "var(--text-normal)",
+                        marginLeft: "20px",
+                        listStyle: "circle"
+                    }
+                },
+                    React.createElement("li", {
+                        style: {
+                            marginBottom: "10px"
+                        }
+                    },
+                        React.createElement("strong", null, "Daily Schedules:"),
+                        " Set reminders that repeat every X days at a specific time."
+                    ),
+                    React.createElement("li", {
+                        style: {
+                            marginBottom: "10px"
+                        }
+                    },
+                        React.createElement("strong", null, "Weekly Schedules:"),
+                        " Create reminders that repeat every X weeks on specific days at a set time."
+                    ),
+                    React.createElement("li", {
+                        style: {
+                            marginBottom: "10px"
+                        }
+                    },
+                        React.createElement("strong", null, "Custom Intervals:"),
+                        " Choose your preferred repeat interval (e.g., every 2 days or every 3 weeks)."
+                    ),
+                    React.createElement("li", {
+                        style: {
+                            marginBottom: "10px"
+                        }
+                    },
+                        React.createElement("strong", null, "Multiple Days:"),
+                        " For weekly schedules, select multiple days for the reminder to trigger."
+                    ),
+                ),
+                React.createElement("h4", {
+                    style: {
+                        color: "var(--header-primary)",
+                        marginTop: "30px",
+                        marginBottom: "10px",
+                        fontWeight: "bold"
                     }
                 }, "Other Features"),
                 React.createElement("ul", {
@@ -463,6 +568,255 @@ class Reminder {
         );
     }
 
+    openScheduleManager() {
+        const { React } = BdApi;
+
+        const ScheduleForm = () => {
+            const [scheduleName, setScheduleName] = React.useState("");
+            const [triggerInterval, setTriggerInterval] = React.useState(1);
+            const [triggerUnit, setTriggerUnit] = React.useState("week");
+            const [selectedDays, setSelectedDays] = React.useState([]);
+            const [reminderTime, setReminderTime] = React.useState("");
+
+            const handleAddSchedule = () => {
+                if (!scheduleName || !reminderTime || (triggerUnit !== "day" && selectedDays.length === 0)) {
+                    UI.showToast("Please fill in all required fields!", { type: "error" });
+                    return;
+                }
+
+                const newSchedule = {
+                    id: Date.now(),
+                    name: scheduleName,
+                    interval: triggerInterval,
+                    unit: triggerUnit,
+                    days: triggerUnit === "day" ? this.Days : selectedDays.sort((a, b) => this.Days.indexOf(a) - this.Days.indexOf(b)),
+                    time: reminderTime,
+                    lastTriggered: null
+                };
+
+                const updatedSchedules = [...(this.settings.schedules || []), newSchedule];
+                this.settings.schedules = updatedSchedules;
+                this.saveSettings();
+                this.setupScheduleReminders(newSchedule);
+
+                setScheduleName("");
+                setTriggerInterval(1);
+                setTriggerUnit("week");
+                setSelectedDays([]);
+                setReminderTime("");
+
+                UI.showToast("Schedule added successfully!", { type: "success" });
+            };
+
+            const baseDays = this.Days;
+            const firstDay = this.settings.firstDayOfWeek || "Sunday";
+            const firstDayIndex = baseDays.indexOf(firstDay);
+            const daysOfWeek = [
+                ...baseDays.slice(firstDayIndex),
+                ...baseDays.slice(0, firstDayIndex)
+            ];
+
+            const toggleDay = (day) => {
+                if (selectedDays.includes(day)) {
+                    setSelectedDays(selectedDays.filter(d => d !== day));
+                } else {
+                    setSelectedDays([...selectedDays, day]);
+                }
+            };
+
+            return React.createElement("div", {
+            },
+                React.createElement("div", {
+                    style: {
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "15px"
+                    }
+                },
+                    React.createElement("h3", {
+                        style: {
+                            color: "var(--header-primary)"
+                        }
+                    }, "Add New Schedule"),
+                    React.createElement("input", {
+                        type: "text",
+                        placeholder: "Schedule Text",
+                        value: scheduleName,
+                        onChange: (e) => setScheduleName(e.target.value),
+                        style: {
+                            padding: "10px",
+                            borderRadius: "5px",
+                            border: "none",
+                            backgroundColor: "var(--bg-base-tertiary)",
+                            color: "var(--header-primary)"
+                        }
+                    }),
+                    React.createElement("div", {
+                        style: {
+                            display: "flex",
+                            gap: "10px",
+                            alignItems: "center"
+                        }
+                    },
+                        React.createElement("span", {
+                            style: { color: "var(--text-normal)" }
+                        }, "Every"),
+                        React.createElement("input", {
+                            type: "number",
+                            min: "1",
+                            value: triggerInterval,
+                            onChange: (e) => setTriggerInterval(parseInt(e.target.value)),
+                            style: {
+                                width: "60px",
+                                padding: "8px",
+                                borderRadius: "5px",
+                                border: "none",
+                                backgroundColor: "var(--bg-base-tertiary)",
+                                color: "var(--text-normal)"
+                            }
+                        }),
+                        React.createElement("select", {
+                            value: triggerUnit,
+                            onChange: (e) => setTriggerUnit(e.target.value),
+                            style: {
+                                padding: "8px",
+                                borderRadius: "5px",
+                                border: "none",
+                                backgroundColor: "var(--bg-base-tertiary)",
+                                color: "var(--text-normal)"
+                            }
+                        },
+                            React.createElement("option", { value: "day" }, "Day(s)"),
+                            React.createElement("option", { value: "week" }, "Week(s)")
+                        )
+                    ),
+                    triggerUnit !== "day" && React.createElement("div", {
+                        style: {
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "8px"
+                        }
+                    },
+                        daysOfWeek.map(day => (
+                            React.createElement("button", {
+                                key: day,
+                                onClick: () => toggleDay(day),
+                                style: {
+                                    padding: "8px 12px",
+                                    borderRadius: "5px",
+                                    border: "1px solid var(--background-modifier-accent)",
+                                    backgroundColor: selectedDays.includes(day) ? "var(--background-modifier-selected)" : "var(--bg-base-tertiary)",
+                                    color: "var(--text-normal)",
+                                    cursor: "pointer"
+                                }
+                            }, day)
+                        ))
+                    ),
+                    React.createElement("h4", {
+                        style: {
+                            color: "var(--header-primary)",
+                            marginTop: "8px"
+                        }
+                    }, "Schedule Time"),
+                    React.createElement("input", {
+                        type: "time",
+                        value: reminderTime,
+                        onChange: (e) => setReminderTime(e.target.value),
+                        style: {
+                            padding: "10px",
+                            borderRadius: "5px",
+                            border: "none",
+                            backgroundColor: "var(--bg-base-tertiary)",
+                            color: "var(--text-normal)"
+                        }
+                    }),
+                    React.createElement("button", {
+                        onClick: handleAddSchedule,
+                        style: {
+                            marginTop: "8px",
+                            padding: "10px",
+                            borderRadius: "5px",
+                            border: "none",
+                            backgroundColor: "var(--button-filled-brand-background)",
+                            color: "var(--white)",
+                            cursor: "pointer"
+                        }
+                    }, "Add Schedule")
+                )
+            );
+        };
+
+        UI.showConfirmationModal(
+            "Schedule Manager",
+            React.createElement(ScheduleForm),
+            {
+                confirmText: "Close",
+                cancelText: null
+            }
+        );
+    }
+
+    setupScheduleReminders(schedule) {
+        const [hours, minutes] = schedule.time.split(":");
+        let targetDate = new Date();
+        targetDate.setHours(parseInt(hours));
+        targetDate.setMinutes(parseInt(minutes));
+        targetDate.setSeconds(0);
+        targetDate.setMilliseconds(0);
+
+        this.reminders = this.reminders.filter(r => !(r.schedule && r.schedule.id === schedule.id));
+
+        if (schedule.unit === "day") {
+            if (targetDate.getTime() <= Date.now()) {
+                targetDate.setDate(targetDate.getDate() + schedule.interval);
+            }
+            
+            this.addReminder(
+                schedule.name,
+                targetDate,
+                false,
+                [],
+                null,
+                schedule
+            );
+        } else if (schedule.unit === "week") {
+            schedule.days.forEach(day => {
+                const dayIndex = this.Days.indexOf(day);
+                const currentDayIndex = targetDate.getDay();
+                let daysUntil = (dayIndex - currentDayIndex + 7) % 7;
+                
+                if (daysUntil === 0 && targetDate.getTime() <= Date.now()) {
+                    daysUntil = 7 * schedule.interval;
+                }
+
+                const reminderDate = new Date(targetDate);
+                reminderDate.setDate(reminderDate.getDate() + daysUntil);
+
+                this.addReminder(
+                    schedule.name,
+                    reminderDate,
+                    false,
+                    [day],
+                    null,
+                    schedule
+                );
+            });
+        }
+        this.saveReminders();
+    }
+
+    checkSchedules() {
+        if (!this.settings.schedules) return;
+        
+        this.settings.schedules.forEach(schedule => {
+            const existingReminders = this.reminders.filter(r => r.schedule && r.schedule.id === schedule.id);
+            
+            if (existingReminders.length === 0) {
+                this.setupScheduleReminders(schedule);
+            }
+        });
+    }
+    
     openReminderModal() {
         const { React } = BdApi;
 
@@ -610,7 +964,7 @@ class Reminder {
                                 style: {
                                     padding: "5px 10px",
                                     borderRadius: "5px",
-                                    border: selectedDay === day ? "2px solid var(--brand-experiment)" : "1px solid var(--background-modifier-accent)",
+                                    border: "1px solid var(--background-modifier-accent)",
                                     background: selectedDay === day ? "var(--background-modifier-selected)" : "var(--bg-base-tertiary)",
                                     color: !!selectedDate ? "var(--text-muted)" : "var(--text-normal)",
                                     cursor: !!selectedDate ? "not-allowed" : "pointer"
@@ -713,47 +1067,89 @@ class Reminder {
                         `Repeat this reminder up to ${this.settings.repeatableReminderCount} times every 5 minutes unless acknowledged (Pressing 'OK').`
                     )
                 ),
-                React.createElement(
-                    "button",
-                    {
-                      style: {
-                        background: "var(--bg-base-tertiary)",
-                        border: "none",
-                        padding: "10px",
-                        borderRadius: "10px",
-                        color: "var(--text-normal)",
-                        cursor: "pointer",
-                        marginTop: "10px",
+                    React.createElement("div", {
+                    style: {
                         display: "flex",
-                        alignItems: "center",
-                        gap: "8px"
-                      },
-                      onClick: () => this.showAllReminders()
-                    },
+                        gap: "10px",
+                        marginTop: "10px",
+                        width: "80%"
+                    }
+                },
                     React.createElement(
-                      "svg",
-                      {
-                        xmlns: "http://www.w3.org/2000/svg",
-                        width: "16",
-                        height: "16",
-                        fill: "currentColor",
-                        viewBox: "0 0 16 16"
-                      },
-                      React.createElement("path", {
-                        d: "M8 3.5a.5.5 0 0 1 .5.5v4h3a.5.5 0 0 1 0 1H8a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5z"
-                      }),
-                      React.createElement("path", {
-                        d: "M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm0-1A7 7 0 1 1 8 1a7 7 0 0 1 0 14z"
-                      })
+                        "button",
+                        {
+                            style: {
+                                background: "var(--bg-base-tertiary)",
+                                border: "none",
+                                padding: "10px",
+                                borderRadius: "10px",
+                                color: "var(--text-normal)",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                                flex: 1
+                            },
+                            onClick: () => this.showAllReminders()
+                        },
+                        React.createElement(
+                            "svg",
+                            {
+                                xmlns: "http://www.w3.org/2000/svg",
+                                width: "16",
+                                height: "16",
+                                fill: "currentColor",
+                                viewBox: "0 0 16 16"
+                            },
+                            React.createElement("path", {
+                                d: "M8 3.5a.5.5 0 0 1 .5.5v4h3a.5.5 0 0 1 0 1H8a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5z"
+                            }),
+                            React.createElement("path", {
+                                d: "M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm0-1A7 7 0 1 1 8 1a7 7 0 0 1 0 14z"
+                            })
+                        ),
+                        "Reminder Inbox"
                     ),
-                    "View/Manage All Reminders"
+                    React.createElement(
+                        "button",
+                        {
+                            style: {
+                                background: "var(--bg-base-tertiary)",
+                                border: "none",
+                                padding: "10px",
+                                borderRadius: "10px",
+                                color: "var(--text-normal)",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                                flex: 1
+                            },
+                            onClick: () => this.openScheduleManager()
+                        },
+                        React.createElement(
+                            "svg",
+                            {
+                                xmlns: "http://www.w3.org/2000/svg",
+                                width: "16",
+                                height: "16",
+                                fill: "currentColor",
+                                viewBox: "0 0 24 24"
+                            },
+                            React.createElement("path", {
+                                d: "M19 4h-1V3c0-.55-.45-1-1-1s-1 .45-1 1v1H8V3c0-.55-.45-1-1-1s-1 .45-1 1v1H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM9 14H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm-8 4H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2z"
+                            })
+                        ),
+                        "Schedule Manager"
+                    )
                 )
             );
         };
 
         UI.showConfirmationModal(
             "Add Reminder",
-            React.createElement(ModalContent), {
+            React.createElement(ModalContent),
+            {
                 confirmText: "Add Reminder",
                 onConfirm: () => {
                     const reminderText = document.getElementById("reminderText").value;
@@ -802,7 +1198,7 @@ class Reminder {
         );
     }
 
-    addReminder(text, time, repeatable, days = [], date = null) {
+    addReminder(text, time, repeatable, days = [], date = null, schedule = null) {
         const reminder = {
             id: Date.now() + Math.random(),
             text,
@@ -810,7 +1206,8 @@ class Reminder {
             repeatable,
             repeatCount: 0,
             days,
-            date
+            date,
+            schedule
         };
         this.reminders.push(reminder);
         this.saveReminders();
@@ -818,7 +1215,18 @@ class Reminder {
     
 
     deleteReminder(reminder) {
-        this.reminders = this.reminders.filter(r => r.time !== reminder.time);
+        if (reminder.schedule) {
+            const scheduleReminders = this.reminders.filter(r => r.schedule && r.schedule.id === reminder.schedule.id);
+            
+            if (scheduleReminders.length === 1) {
+                this.settings.schedules = this.settings.schedules.filter(s => s.id !== reminder.schedule.id);
+                this.saveSettings();
+            }
+        
+            this.reminders = this.reminders.filter(r => r.id !== reminder.id);
+        } else {
+            this.reminders = this.reminders.filter(r => r.time !== reminder.time);
+        }
         this.saveReminders();
         this.showAllReminders();
     }
@@ -853,6 +1261,29 @@ class Reminder {
                     delete this.acknowledgedReminders[reminder.id];
                     updatedReminders.push(reminder);
                 } else {
+                    if (reminder.schedule) {
+                        const schedule = reminder.schedule;
+                        let nextDate = new Date(reminder.time);
+                        
+                        if (schedule.unit === "day") {
+                            nextDate.setDate(nextDate.getDate() + schedule.interval);
+                        } else if (schedule.unit === "week") {
+                            nextDate.setDate(nextDate.getDate() + (7 * schedule.interval));
+                        }
+                        
+                        const newReminder = {
+                            id: Date.now() + Math.random(),
+                            text: reminder.text,
+                            time: nextDate.getTime(),
+                            repeatable: false,
+                            repeatCount: 0,
+                            days: reminder.days,
+                            date: null,
+                            schedule: schedule
+                        };
+                        updatedReminders.push(newReminder);
+                    }
+                    
                     this.acknowledgedReminders[reminder.id] = true;
                 }
             } else {
@@ -1047,7 +1478,7 @@ class Reminder {
                                             fontSize: "16px",
                                             fontWeight: "500"
                                         }
-                                    }, reminder.text)
+                                    }, reminder.schedule ? `[Schedule] ${reminder.text}` : reminder.text)
                                 ),
                                 React.createElement("div", {
                                     style: {
@@ -1183,59 +1614,15 @@ class Reminder {
     showChangelog() {
         const changes = [
             {
-                title: "Version 1.4.5",
+                title: "Major Update - Version 1.5",
                 type: "added",
                 items: [
-                    "📅 **Reminder Date:** You can now set reminders for a specific date using a calendar input. Only one of \"Reminder Day\" or \"Reminder Date\" can be selected at a time. (Suggested by TirOFlanc on GitHub)",
-                    "🖱️ **Day Toggle:** Clicking the selected day again will now deselect it.",
-                ]
-            },
-            {
-                title: "Version 1.4.4",
-                type: "fixed",
-                items: [
-                    "✨ **Sidebar Button Fix:** Fixed an issue that caused the sidebar button to not show up."
-                ]
-            },
-            {
-                title: "Version 1.4.3",
-                type: "fixed",
-                items: [
-                    "✨ **Sidebar Button Style:** Fixed a styling issue that caused the sidebar button to be off-center."
-                ]
-            },
-            {
-                title: "Version 1.4.2",
-                type: "progress",
-                items: [
-                    "✨ **Reminder Inbox Icon:** Added an inbox icon to the user panel for quick access to the Reminder Inbox. (Can be hidden from the settings.)",
-                    "📂 **Categorized Settings:** Organized the settings into categories for a cleaner and more intuitive layout.",
-                    "🔧 **Sidebar Button Fix:** Fixed an issue where disabling the plugin wouldn't remove the sidebar button."
-                ]
-            },
-            {
-                title: "Version 1.4.1",
-                type: "added",
-                items: [
-                    "✨ **Reminder Day:** You can now schedule reminders for a specific day of the week! Set the day you want, and your reminder will trigger at the selected time. (Suggested by @zrodevkaan on Discord and TirOFlanc on GitHub)",
-                    "⌨️ **Improved Shortcut Input:** The shortcut input in the settings panel is now more intuitive and user-friendly. **⚠️ Please enter the shortcut in the settings again!**",
-                    "⏰ **Custom Repeat Limit:** You can now set how many times a repeatable reminder should repeat. (Minimum: 3, Maximum: 10)",
-                    "☀️ **First Day of the Week:** Added an option to choose your preferred first day of the week, making it easier to plan and schedule reminders.",
-                    "📥 **Redesigned Reminder Inbox:** Reminder Inbox has been completely overhauled and redesigned for a better experience. You can now view your reminders with more detail, sort them more easily, and there's a confirmation prompt before deleting any reminder.",
-                    "👾 **Improved Code:** Improved the sidebar button code. (Special thanks to [@zrodevkaan/Arven](https://betterdiscord.app/developer/Arven) for the help! 🫂)"
-                ]
-            },
-            {
-                title: "Major Update - Version 1.4",
-                type: "added",
-                items: [
-                    "✨ **Default Shortcut:** Added 'Shift+R' to open the reminder modal (customizable in settings).",
-                    "🔔 **Second Reminder Button:** Added a new Reminder button in the left sidebar.",
-                    "📍 **Customizable Button Location:** New setting to choose where the Reminder button appears—User Area, Sidebar, or Both (default is Both).",
-                    "⌨️ **Shortcut Customization:** Added an option to customize or change the Reminder shortcut.",
-                    "🎨 **UI Enhancements:** Updated the colors of various elements for a fresher look.",
-                    "👾 **Simplified Reminder Modal:** Removed the descriptions in the Reminder Modal for a cleaner, more minimal design. Descriptions are available in the Reminder Guide Modal (accessible via the ? icon).",
-                    "🎨 **New Changelog:** A cleaner, more organized changelog—just like this one!"
+                    "✨ **Schedule Manager:** Schedule Manager allows you to create recurring reminders with flexible, customizable scheduling options. Learn more in the **Reminder Guide**. (Suggested on GitHub by a now deleted user)",
+                    "✨ **Reminder Date:** You can now set reminders for a specific date using a calendar input. Only one of \"Reminder Day\" or \"Reminder Date\" can be selected at a time. (Suggested by TirOFlanc on GitHub)",
+                    "🔘 **Schedule Manager Button:** Added a calendar icon next to the \"Add Reminder\" button to open the Schedule Manager modal. (Can be hidden in settings)",
+                    "⌨️ **New Shortcuts:** Added two new shortcuts: Reminder Inbox (Shift+I) and Schedule Manager (Shift+S). (Customizable in settings)",
+                    "🖱️ **Day Toggle:** Clicking an already selected day now toggles it off.",
+                    "⚙️ **New Settings Options:** 1. \"Show Schedule Manager Button\" (UI Settings), 2. \"Reminder Inbox Shortcut\" (Advanced Settings), 3. \"Schedule Manager Shortcut\" (Advanced Settings)"
                 ]
             }
         ];
@@ -1316,6 +1703,18 @@ class Reminder {
                             }
                         },
                         {
+                            type: "switch",
+                            id: "showScheduleManagerButton",
+                            name: "Show Schedule Manager Button",
+                            note: "Show or hide the Schedule Manager button next to the Reminder button.",
+                            value: this.settings.showScheduleManagerButton,
+                            onChange: (value) => {
+                                this.settings.showScheduleManagerButton = value;
+                                this.saveSettings();
+                                this.refreshReminderButtons();
+                            }
+                        },
+                        {
                             type: "radio",
                             id: "buttonLocation",
                             name: "Reminder Button Location",
@@ -1375,10 +1774,32 @@ class Reminder {
                             type: "keybind",
                             id: "reminderShortcut",
                             name: "Reminder Shortcut",
-                            note: "Set your preferred shortcut to open the reminder modal (e.g., Shift+R, Ctrl+Alt+R).",
+                            note: "Set your preferred shortcut to open the reminder modal (e.g., Shift+R).",
                             value: this.settings.reminderShortcut,
                             onChange: (value) => {
                                 this.settings.reminderShortcut = value;
+                                this.saveSettings();
+                            }
+                        },
+                        {
+                            type: "keybind",
+                            id: "reminderInboxShortcut",
+                            name: "Reminder Inbox Shortcut",
+                            note: "Set your preferred shortcut to open the reminder inbox (e.g., Shift+I).",
+                            value: this.settings.reminderInboxShortcut,
+                            onChange: (value) => {
+                                this.settings.reminderInboxShortcut = value;
+                                this.saveSettings();
+                            }
+                        },
+                        {
+                            type: "keybind",
+                            id: "scheduleManagerShortcut",
+                            name: "Schedule Manager Shortcut",
+                            note: "Set your preferred shortcut to open the schedule manager (e.g., Shift+S).",
+                            value: this.settings.scheduleManagerShortcut,
+                            onChange: (value) => {
+                                this.settings.scheduleManagerShortcut = value;
                                 this.saveSettings();
                             }
                         },
