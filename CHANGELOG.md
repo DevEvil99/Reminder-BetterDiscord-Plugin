@@ -1,3 +1,11 @@
+## Reminder v1.5 - June 14, 2025
+- **Schedule Manager:** Schedule Manager allows you to create recurring reminders with flexible, customizable scheduling options. Learn more in the **Reminder Guide**. (Suggested on GitHub by a now deleted user)
+- **Reminder Date:** You can now set reminders for a specific date using a calendar input. Only one of "Reminder Day" or "Reminder Date" can be selected at a time. (Suggested by TirOFlanc on GitHub)
+- **Schedule Manager Button:** Added a calendar icon next to the "Add Reminder" button to open the Schedule Manager modal. (Can be hidden in settings)
+- **New Shortcuts:** Added two new shortcuts: Reminder Inbox (Shift+I) and Schedule Manager (Shift+S). (Customizable in settings)
+- **Day Toggle:** Clicking an already selected day now toggles it off.
+- **New Settings Options:** 1. "Show Schedule Manager Button" (UI Settings), 2. "Reminder Inbox Shortcut" (Advanced Settings), 3. "Schedule Manager Shortcut" (Advanced Settings)
+
 ## Reminder v1.4.4 - May 2, 2025
 - **Sidebar Button Fix: Fixed an issue that caused the sidebar button to not show up.**
 
