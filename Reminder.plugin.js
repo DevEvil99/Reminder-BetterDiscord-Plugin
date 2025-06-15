@@ -1,6 +1,6 @@
 /**
  * @name Reminder
- * @version 1.5
+ * @version 1.5.1
  * @description A BetterDiscord plugin that lets you create, view, and manage custom reminders and schedules with notification support.
  * @author DevEvil
  * @website https://devevil.com
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.5",
+        version: "1.5.1",
         description: "A BetterDiscord plugin that lets you create, view, and manage custom reminders and schedules with notification support.",
         authors: [{
             name: "DevEvil",
@@ -60,6 +60,7 @@ class Reminder {
             repeatableReminderCount: 3,
             showReminderInboxIcon: true,
             showScheduleManagerButton: true,
+            enableShortcuts: true,
             schedules: []
         };
         this.settings = this.loadSettings();
@@ -169,7 +170,9 @@ class Reminder {
             }
         };
     
-        document.addEventListener("keydown", this.keybindHandler);
+        if (this.settings.enableShortcuts) {
+            document.addEventListener("keydown", this.keybindHandler);
+        }
     
         this.checkReminders();
         this.checkSchedules();
@@ -564,6 +567,7 @@ class Reminder {
             "Reminder Guide",
             React.createElement(HelpContent), {
                 confirmText: "Close",
+                cancelText: null
             }
         );
     }
@@ -1614,6 +1618,13 @@ class Reminder {
     showChangelog() {
         const changes = [
             {
+                title: "Version 1.5.1",
+                type: "added",
+                items: [
+                    "⌨️ **Shortcut Option:** Added an option in \"Advanced Settings\" to enable or disable keyboard shortcuts. (Suggested by SomeLadOnTheNet & Vaelek on GitHub)"
+                ]
+            },
+            {
                 title: "Major Update - Version 1.5",
                 type: "added",
                 items: [
@@ -1768,6 +1779,22 @@ class Reminder {
                             onChange: (value) => {
                                 this.settings.repeatableReminderCount = value;
                                 this.saveSettings();
+                            }
+                        },
+                        {
+                            type: "switch",
+                            id: "enableShortcuts",
+                            name: "Enable Shortcuts",
+                            note: "Enable or disable all keyboard shortcuts.",
+                            value: this.settings.enableShortcuts,
+                            onChange: (value) => {
+                                this.settings.enableShortcuts = value;
+                                this.saveSettings();
+                                if (value) {
+                                    document.addEventListener("keydown", this.keybindHandler);
+                                } else {
+                                    document.removeEventListener("keydown", this.keybindHandler);
+                                }
                             }
                         },
                         {
