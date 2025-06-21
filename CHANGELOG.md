@@ -1,3 +1,6 @@
+## Reminder v1.5.1 - June 15, 2025
+- **Shortcut Option:** Added an option in "Advanced Settings" to enable or disable keyboard shortcuts. (Suggested by SomeLadOnTheNet & Vaelek on GitHub)
+
 ## Reminder v1.5 - June 14, 2025
 - **Schedule Manager:** Schedule Manager allows you to create recurring reminders with flexible, customizable scheduling options. Learn more in the **Reminder Guide**. (Suggested on GitHub by a now deleted user)
 - **Reminder Date:** You can now set reminders for a specific date using a calendar input. Only one of "Reminder Day" or "Reminder Date" can be selected at a time. (Suggested by TirOFlanc on GitHub)
