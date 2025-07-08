@@ -1,6 +1,6 @@
 /**
  * @name Reminder
- * @version 1.5.1
+ * @version 1.5.2
  * @description A BetterDiscord plugin that lets you create, view, and manage custom reminders and schedules with notification support.
  * @author DevEvil
  * @website https://devevil.com
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.5.1",
+        version: "1.5.2",
         description: "A BetterDiscord plugin that lets you create, view, and manage custom reminders and schedules with notification support.",
         authors: [{
             name: "DevEvil",
@@ -240,13 +240,13 @@ class Reminder {
         const button = document.createElement("button");
         button.textContent = "Add Reminder";
         Object.assign(button.style, {
-            background: "var(--bg-base-tertiary)",
+            background: "var(--background-base-lowest)",
             outline: "none",
             border: "none",
             padding: "10px",
             borderRadius: "10px",
             flex: 1,
-            color: "var(--text-normal)",
+            color: "var(--text-primary)",
             cursor: "pointer"
         });
         button.className = "reminder-button";
@@ -261,7 +261,7 @@ class Reminder {
                 outline: "none",
                 border: "none",
                 padding: "10px",
-                color: "var(--text-normal)",
+                color: "var(--text-primary)",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -440,7 +440,7 @@ class Reminder {
                 }, "How to Add a Reminder"),
                 React.createElement("ul", {
                         style: {
-                            color: "var(--text-normal)",
+                            color: "var(--text-primary)",
                             marginLeft: "20px",
                             listStyle: "circle"
                         }
@@ -476,13 +476,13 @@ class Reminder {
                 }, "Schedule Manager"),
                 React.createElement("p", {
                     style: {
-                        color: "var(--text-normal)",
+                        color: "var(--text-primary)",
                         marginBottom: "10px"
                     }
                 }, "The Schedule Manager allows you to create recurring reminders with flexible scheduling options:"),
                 React.createElement("ul", {
                     style: {
-                        color: "var(--text-normal)",
+                        color: "var(--text-primary)",
                         marginLeft: "20px",
                         listStyle: "circle"
                     }
@@ -530,7 +530,7 @@ class Reminder {
                 }, "Other Features"),
                 React.createElement("ul", {
                     style: {
-                        color: "var(--text-normal)",
+                        color: "var(--text-primary)",
                         marginLeft: "20px",
                         listStyle: "circle"
                     }
@@ -651,7 +651,7 @@ class Reminder {
                             padding: "10px",
                             borderRadius: "5px",
                             border: "none",
-                            backgroundColor: "var(--bg-base-tertiary)",
+                            backgroundColor: "var(--background-base-lowest)",
                             color: "var(--header-primary)"
                         }
                     }),
@@ -663,7 +663,7 @@ class Reminder {
                         }
                     },
                         React.createElement("span", {
-                            style: { color: "var(--text-normal)" }
+                            style: { color: "var(--text-primary)" }
                         }, "Every"),
                         React.createElement("input", {
                             type: "number",
@@ -675,8 +675,8 @@ class Reminder {
                                 padding: "8px",
                                 borderRadius: "5px",
                                 border: "none",
-                                backgroundColor: "var(--bg-base-tertiary)",
-                                color: "var(--text-normal)"
+                                backgroundColor: "var(--background-base-lowest)",
+                                color: "var(--text-primary)"
                             }
                         }),
                         React.createElement("select", {
@@ -686,8 +686,8 @@ class Reminder {
                                 padding: "8px",
                                 borderRadius: "5px",
                                 border: "none",
-                                backgroundColor: "var(--bg-base-tertiary)",
-                                color: "var(--text-normal)"
+                                backgroundColor: "var(--background-base-lowest)",
+                                color: "var(--text-primary)"
                             }
                         },
                             React.createElement("option", { value: "day" }, "Day(s)"),
@@ -708,9 +708,9 @@ class Reminder {
                                 style: {
                                     padding: "8px 12px",
                                     borderRadius: "5px",
-                                    border: "1px solid var(--background-modifier-accent)",
-                                    backgroundColor: selectedDays.includes(day) ? "var(--background-modifier-selected)" : "var(--bg-base-tertiary)",
-                                    color: "var(--text-normal)",
+                                    border: "1px solid var(--border-subtle)",
+                                    backgroundColor: selectedDays.includes(day) ? "var(--border-subtle)" : "var(--background-base-lowest)",
+                                    color: "var(--text-primary)",
                                     cursor: "pointer"
                                 }
                             }, day)
@@ -730,8 +730,8 @@ class Reminder {
                             padding: "10px",
                             borderRadius: "5px",
                             border: "none",
-                            backgroundColor: "var(--bg-base-tertiary)",
-                            color: "var(--text-normal)"
+                            backgroundColor: "var(--background-base-lowest)",
+                            color: "var(--text-primary)"
                         }
                     }),
                     React.createElement("button", {
@@ -904,7 +904,7 @@ class Reminder {
                         onChange: (e) => setReminderText(e.target.value),
                         required: true,
                         style: {
-                            background: "var(--bg-base-tertiary)",
+                            background: "var(--background-base-lowest)",
                             outline: "none",
                             border: "none",
                             padding: "10px",
@@ -932,7 +932,7 @@ class Reminder {
                         onChange: (e) => setReminderTime(e.target.value),
                         required: true,
                         style: {
-                            background: "var(--bg-base-tertiary)",
+                            background: "var(--background-base-lowest)",
                             outline: "none",
                             border: "none",
                             padding: "10px",
@@ -968,9 +968,9 @@ class Reminder {
                                 style: {
                                     padding: "5px 10px",
                                     borderRadius: "5px",
-                                    border: "1px solid var(--background-modifier-accent)",
-                                    background: selectedDay === day ? "var(--background-modifier-selected)" : "var(--bg-base-tertiary)",
-                                    color: !!selectedDate ? "var(--text-muted)" : "var(--text-normal)",
+                                    border: "1px solid var(--border-subtle)",
+                                    background: selectedDay === day ? "var(--border-subtle)" : "var(--background-base-lowest)",
+                                    color: !!selectedDate ? "var(--text-muted)" : "var(--text-primary)",
                                     cursor: !!selectedDate ? "not-allowed" : "pointer"
                                 }
                             }, day.slice(0, 3))
@@ -995,7 +995,7 @@ class Reminder {
                         onChange: (e) => selectDate(e.target.value),
                         disabled: !!selectedDay,
                         style: {
-                            background: "var(--bg-base-tertiary)",
+                            background: "var(--background-base-lowest)",
                             outline: "none",
                             border: "none",
                             padding: "10px",
@@ -1051,7 +1051,7 @@ class Reminder {
                                 top: "0",
                                 height: "20px",
                                 width: "20px",
-                                backgroundColor: "var(--bg-base-tertiary)",
+                                backgroundColor: "var(--background-base-lowest)",
                                 borderRadius: "5px",
                                 transition: "0.2s ease-in-out",
                                 display: "flex",
@@ -1083,11 +1083,11 @@ class Reminder {
                         "button",
                         {
                             style: {
-                                background: "var(--bg-base-tertiary)",
+                                background: "var(--background-base-lowest)",
                                 border: "none",
                                 padding: "10px",
                                 borderRadius: "10px",
-                                color: "var(--text-normal)",
+                                color: "var(--text-primary)",
                                 cursor: "pointer",
                                 display: "flex",
                                 alignItems: "center",
@@ -1118,11 +1118,11 @@ class Reminder {
                         "button",
                         {
                             style: {
-                                background: "var(--bg-base-tertiary)",
+                                background: "var(--background-base-lowest)",
                                 border: "none",
                                 padding: "10px",
                                 borderRadius: "10px",
-                                color: "var(--text-normal)",
+                                color: "var(--text-primary)",
                                 cursor: "pointer",
                                 display: "flex",
                                 alignItems: "center",
@@ -1354,9 +1354,8 @@ class Reminder {
                     padding: "20px",
                     maxHeight: "500px",
                     overflowY: "auto",
-                    backgroundColor: "var(--background-primary)",
-                    borderRadius: "8px",
-                    fontFamily: "var(--font-primary)"
+                    backgroundColor: "var(--background-base-lowest)",
+                    borderRadius: "8px"
                 }
             },
                 React.createElement("div", {
@@ -1370,11 +1369,11 @@ class Reminder {
                     React.createElement("button", {
                         onClick: handleSortToggle,
                         style: {
-                            background: "var(--button-secondary-background)",
+                            background: "var(--autocomplete-bg)",
                             border: "none",
                             padding: "8px 12px",
                             borderRadius: "4px",
-                            color: "var(--text-normal)",
+                            color: "var(--text-primary)",
                             cursor: "pointer",
                             fontSize: "14px",
                             transition: "background-color 0.2s"
@@ -1403,7 +1402,7 @@ class Reminder {
                             textAlign: "center",
                             color: "var(--text-muted)",
                             padding: "20px",
-                            border: "1px dashed var(--background-modifier-accent)",
+                            border: "1px dashed var(--border-subtle)",
                             borderRadius: "8px"
                         }
                     },
@@ -1435,7 +1434,7 @@ class Reminder {
                                 alignItems: "center",
                                 padding: "12px",
                                 marginBottom: "10px",
-                                backgroundColor: "var(--background-secondary)",
+                                backgroundColor: "var(--autocomplete-bg)",
                                 borderRadius: "6px",
                                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
                                 transition: "transform 0.2s, opacity 0.2s",
@@ -1478,7 +1477,7 @@ class Reminder {
                                     ),
                                     React.createElement("span", {
                                         style: {
-                                            color: "var(--text-normal)",
+                                            color: "var(--text-primary)",
                                             fontSize: "16px",
                                             fontWeight: "500"
                                         }
@@ -1519,7 +1518,7 @@ class Reminder {
                                             display: "flex",
                                             alignItems: "center",
                                             gap: "4px",
-                                            background: "var(--background-modifier-accent)",
+                                            background: "var(--border-subtle)",
                                             padding: "2px 6px",
                                             borderRadius: "4px"
                                         }
@@ -1552,7 +1551,7 @@ class Reminder {
                                         border: "none",
                                         padding: "6px 12px",
                                         borderRadius: "4px",
-                                        color: "var(--text-on-danger)",
+                                        color: "var(--text-primary)",
                                         cursor: "pointer",
                                         fontSize: "14px",
                                         transition: "background-color 0.2s"
@@ -1607,7 +1606,7 @@ class Reminder {
             ...this.reminders.map(reminder =>
                 React.createElement("div", {
                         style: {
-                            color: "var(--text-normal)"
+                            color: "var(--text-primary)"
                         }
                     },
                     reminder.text)
@@ -1617,6 +1616,13 @@ class Reminder {
 
     showChangelog() {
         const changes = [
+            {
+                title: "Version 1.5.2",
+                type: "fixed",
+                items: [
+                    "🎨 **Color Display Fix:** Resolved an issue where UI colors were not appearing correctly."
+                ]
+            },
             {
                 title: "Version 1.5.1",
                 type: "added",
