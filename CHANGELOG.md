@@ -1,3 +1,6 @@
+## Reminder v1.5.2 - July 9, 2025
+- **Color Display Fix:** Resolved an issue where UI colors were not appearing correctly.
+
 ## Reminder v1.5.1 - June 15, 2025
 - **Shortcut Option:** Added an option in "Advanced Settings" to enable or disable keyboard shortcuts. (Suggested by SomeLadOnTheNet & Vaelek on GitHub)
 
