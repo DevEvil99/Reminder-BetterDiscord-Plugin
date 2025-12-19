@@ -1,3 +1,7 @@
+## Reminder v1.5.3 - December 18, 2025
+- **Plugin Startup Issue:** Fixed a problem that prevented the plugin from starting.
+- **Color Display Fix:** Resolved an issue where UI colors were not appearing correctly.
+
 ## Reminder v1.5.2 - July 9, 2025
 - **Color Display Fix:** Resolved an issue where UI colors were not appearing correctly.
 
