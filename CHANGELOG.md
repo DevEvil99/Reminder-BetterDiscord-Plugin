@@ -1,3 +1,7 @@
+## Reminder v1.5.4 - February 11, 2026
+- **Reminder Inbox Icon:** Fixed the Reminder Inbox icon not appearing in the user panel.
+- **Color Display Fix:** Resolved an issue where UI colors were not appearing correctly.
+
 ## Reminder v1.5.3 - December 18, 2025
 - **Plugin Startup Issue:** Fixed a problem that prevented the plugin from starting.
 - **Color Display Fix:** Resolved an issue where UI colors were not appearing correctly.
