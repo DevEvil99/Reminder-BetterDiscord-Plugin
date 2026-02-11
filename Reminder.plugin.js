@@ -1,6 +1,6 @@
 /**
  * @name Reminder
- * @version 1.5.3
+ * @version 1.5.4
  * @description A BetterDiscord plugin that lets you create, view, and manage custom reminders and schedules with notification support.
  * @author DevEvil
  * @website https://devevil.com
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.5.3",
+        version: "1.5.4",
         description: "A BetterDiscord plugin that lets you create, view, and manage custom reminders and schedules with notification support.",
         authors: [{
             name: "DevEvil",
@@ -344,7 +344,7 @@ class Reminder {
         if (!this.settings.showReminderInboxIcon) return;
 
         const buttonClasses = `${Webpack.getByKeys('plateMuted').button} ${Webpack.getByKeys('plateMuted').enabled} ${Webpack.getByKeys('plateMuted').plated} ${Webpack.getByKeys('colorBrandInverted').button} ${Webpack.getByKeys('colorBrandInverted').lookBlank} ${Webpack.getByKeys('colorBrandInverted').colorBrand} ${Webpack.getByKeys('colorBrandInverted').grow} reminderInboxIcon`;
-        const iconDivClasses = `${Webpack.getByKeys('lottieIcon').lottieIcon} ${Webpack.getByKeys('lottieIcon').lottieIconColors} ${Webpack.getByKeys('avatarWrapper').iconForeground}`;
+        const iconDivClasses = `${Webpack.getByKeys('lottieIcon').lottieIcon} ${Webpack.getByKeys('lottieIcon').lottieIconColors}`;
 
         const button = document.createElement("button");
         button.className = buttonClasses;
@@ -381,7 +381,7 @@ class Reminder {
 
         const path = document.createElementNS(SVG_NS, "path");
         path.setAttribute("d", "M5.024 3.783A1 1 0 0 1 6 3h12a1 1 0 0 1 .976.783L20.802 12h-4.244a1.99 1.99 0 0 0-1.824 1.205 2.978 2.978 0 0 1-5.468 0A1.991 1.991 0 0 0 7.442 12H3.198l1.826-8.217ZM3 14v5a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5h-4.43a4.978 4.978 0 0 1-9.14 0H3Z");
-        path.setAttribute("fill", "currentColor");
+        path.setAttribute("fill", "var(--text-default)");
         
         button.appendChild(contentDiv);
         contentDiv.appendChild(iconDiv);
@@ -390,7 +390,7 @@ class Reminder {
 
         UI.createTooltip(button, "Reminder Inbox", { style: "primary", side: "top" });
 
-        const buttonPanel = document.querySelector(`.${Webpack.getByKeys('avatarWrapper').buttons}`);
+        const buttonPanel = document.querySelector(`.${Webpack.getByKeys('accountPopoutButtonWrapper').buttons}`);
         if (buttonPanel) {
             buttonPanel.appendChild(button);
         }
@@ -425,7 +425,7 @@ class Reminder {
             return React.createElement("div", null,
                 React.createElement("h4", {
                     style: {
-                        color: "var(--header-primary)",
+                        color: "var(--text-default)",
                         marginBottom: "10px",
                         fontWeight: "bold"
                     }
@@ -460,7 +460,7 @@ class Reminder {
                 ),
                 React.createElement("h4", {
                     style: {
-                        color: "var(--header-primary)",
+                        color: "var(--text-default)",
                         marginTop: "30px",
                         marginBottom: "10px",
                         fontWeight: "bold"
@@ -514,7 +514,7 @@ class Reminder {
                 ),
                 React.createElement("h4", {
                     style: {
-                        color: "var(--header-primary)",
+                        color: "var(--text-default)",
                         marginTop: "30px",
                         marginBottom: "10px",
                         fontWeight: "bold"
@@ -631,7 +631,7 @@ class Reminder {
                 },
                     React.createElement("h3", {
                         style: {
-                            color: "var(--header-primary)"
+                            color: "var(--text-default)"
                         }
                     }, "Add New Schedule"),
                     React.createElement("input", {
@@ -644,7 +644,7 @@ class Reminder {
                             borderRadius: "5px",
                             border: "none",
                             backgroundColor: "var(--background-base-lowest)",
-                            color: "var(--header-primary)"
+                            color: "var(--text-default)"
                         }
                     }),
                     React.createElement("div", {
@@ -710,7 +710,7 @@ class Reminder {
                     ),
                     React.createElement("h4", {
                         style: {
-                            color: "var(--header-primary)",
+                            color: "var(--text-default)",
                             marginTop: "8px"
                         }
                     }, "Schedule Time"),
@@ -733,8 +733,9 @@ class Reminder {
                             padding: "10px",
                             borderRadius: "5px",
                             border: "none",
-                            backgroundColor: "var(--button-filled-brand-background)",
+                            backgroundColor: "var(--bd-brand)",
                             color: "var(--white)",
+                            fontWeight: "600",
                             cursor: "pointer"
                         }
                     }, "Add Schedule")
@@ -864,7 +865,7 @@ class Reminder {
                         viewBox: "0 0 24 24",
                         width: "24",
                         height: "24",
-                        fill: "var(--__lottieIconColor,var(--interactive-normal))",
+                        fill: "var(--text-default)",
                         style: {
                             position: "absolute",
                             bottom: "0",
@@ -884,7 +885,7 @@ class Reminder {
                     },
                     React.createElement("h4", {
                         style: {
-                            color: "var(--header-primary)",
+                            color: "var(--text-default)",
                             marginBottom: "5px"
                         }
                     }, "Reminder Text"),
@@ -902,7 +903,7 @@ class Reminder {
                             padding: "10px",
                             borderRadius: "10px",
                             width: "95%",
-                            color: "var(--header-primary)",
+                            color: "var(--text-default)",
                         }
                     })
                 ),
@@ -913,7 +914,7 @@ class Reminder {
                     },
                     React.createElement("h4", {
                         style: {
-                            color: "var(--header-primary)",
+                            color: "var(--text-default)",
                             marginBottom: "5px"
                         }
                     }, "Reminder Time"),
@@ -930,7 +931,7 @@ class Reminder {
                             padding: "10px",
                             borderRadius: "10px",
                             width: "95%",
-                            color: "var(--header-primary)",
+                            color: "var(--text-default)",
                         }
                     })
                 ),
@@ -941,7 +942,7 @@ class Reminder {
                     },
                     React.createElement("h4", {
                         style: {
-                            color: "var(--header-primary)",
+                            color: "var(--text-default)",
                             marginBottom: "5px"
                         }
                     }, "Reminder Day (Optional)"),
@@ -976,7 +977,7 @@ class Reminder {
                     },
                     React.createElement("h4", {
                         style: {
-                            color: "var(--header-primary)",
+                            color: "var(--text-default)",
                             marginBottom: "5px"
                         }
                     }, "Reminder Date (Optional)"),
@@ -993,7 +994,7 @@ class Reminder {
                             padding: "10px",
                             borderRadius: "10px",
                             width: "95%",
-                            color: !!selectedDay ? "var(--text-muted)" : "var(--header-primary)",
+                            color: !!selectedDay ? "var(--text-muted)" : "var(--text-default)",
                             cursor: !!selectedDay ? "not-allowed" : "pointer"
                         }
                     })
@@ -1005,13 +1006,13 @@ class Reminder {
                     },
                     React.createElement("h4", {
                         style: {
-                            color: "var(--header-primary)",
+                            color: "var(--text-default)",
                             marginBottom: "5px"
                         }
                     }, "Repeatable Reminder"),
                     React.createElement("label", {
                             style: {
-                                color: "var(--header-primary)",
+                                color: "var(--text-default)",
                                 fontSize: "12px",
                                 display: "flex",
                                 alignItems: "center",
@@ -1055,7 +1056,7 @@ class Reminder {
                             xmlns: "http://www.w3.org/2000/svg",
                             height: "16",
                             width: "16",
-                            fill: "var(--interactive-active)",
+                            fill: "var(--text-default)",
                             viewBox: "0 0 24 24"
                         }, React.createElement("path", {
                             d: "M20.285 6.709a1 1 0 0 0-1.414-1.414l-9.928 9.929-3.535-3.535a1 1 0 1 0-1.414 1.414l4.243 4.243a1 1 0 0 0 1.414 0l10.634-10.637Z"
@@ -1361,7 +1362,7 @@ class Reminder {
                     React.createElement("button", {
                         onClick: handleSortToggle,
                         style: {
-                            background: "var(--autocomplete-bg)",
+                            background: "var(--background-base-lower)",
                             border: "none",
                             padding: "8px 12px",
                             borderRadius: "4px",
@@ -1370,8 +1371,8 @@ class Reminder {
                             fontSize: "14px",
                             transition: "background-color 0.2s"
                         },
-                        onMouseEnter: (e) => e.target.style.backgroundColor = "var(--button-secondary-background-hover)",
-                        onMouseLeave: (e) => e.target.style.backgroundColor = "var(--button-secondary-background)"
+                        onMouseEnter: (e) => e.target.style.backgroundColor = "var(--background-base-lower)",
+                        onMouseLeave: (e) => e.target.style.backgroundColor = "var(--background-base-lower)"
                     },
                         React.createElement("svg", {
                             xmlns: "http://www.w3.org/2000/svg",
@@ -1426,7 +1427,7 @@ class Reminder {
                                 alignItems: "center",
                                 padding: "12px",
                                 marginBottom: "10px",
-                                backgroundColor: "var(--autocomplete-bg)",
+                                backgroundColor: "var(--background-base-lower)",
                                 borderRadius: "6px",
                                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
                                 transition: "transform 0.2s, opacity 0.2s",
@@ -1539,7 +1540,7 @@ class Reminder {
                                 React.createElement("button", {
                                     onClick: () => handleDelete(reminder),
                                     style: {
-                                        background: "var(--button-danger-background)",
+                                        background: "var(--status-danger)",
                                         border: "none",
                                         padding: "6px 12px",
                                         borderRadius: "4px",
@@ -1548,8 +1549,8 @@ class Reminder {
                                         fontSize: "14px",
                                         transition: "background-color 0.2s"
                                     },
-                                    onMouseEnter: (e) => e.target.style.backgroundColor = "var(--button-danger-background-hover)",
-                                    onMouseLeave: (e) => e.target.style.backgroundColor = "var(--button-danger-background)"
+                                    onMouseEnter: (e) => e.target.style.backgroundColor = "var(--status-danger)",
+                                    onMouseLeave: (e) => e.target.style.backgroundColor = "var(--status-danger)"
                                 },
                                     React.createElement("svg", {
                                         xmlns: "http://www.w3.org/2000/svg",
@@ -1608,6 +1609,14 @@ class Reminder {
 
     showChangelog() {
         const changes = [
+            {
+                title: "Version 1.5.4",
+                type: "fixed",
+                items: [
+                    "⚙️ **Reminder Inbox Icon:** Fixed the Reminder Inbox icon not appearing in the user panel.",
+                    "🎨 **Color Display Fix:** Resolved an issue where UI colors were not appearing correctly."
+                ]
+            },
             {
                 title: "Version 1.5.3",
                 type: "fixed",
