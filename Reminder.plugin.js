@@ -1,6 +1,6 @@
 /**
  * @name Reminder
- * @version 1.5.4
+ * @version 1.6.0
  * @description A BetterDiscord plugin that lets you create, view, and manage custom reminders and schedules with notification support.
  * @author DevEvil
  * @website https://devevil.com
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.5.4",
+        version: "1.6.0",
         description: "A BetterDiscord plugin that lets you create, view, and manage custom reminders and schedules with notification support.",
         authors: [{
             name: "DevEvil",
@@ -52,9 +52,9 @@ class Reminder {
             notificationSound: true,
             notificationSoundURL: "https://devevil99.github.io/devevil/files/Discord-Notification.mp3",
             reminderInterval: 60000,
-            reminderShortcut: ["Shift", "R"],
-            reminderInboxShortcut: ["Shift", "I"],
-            scheduleManagerShortcut: ["Shift", "S"],
+            reminderShortcut: ["Alt", "R"],
+            reminderInboxShortcut: ["Alt", "I"],
+            scheduleManagerShortcut: ["Alt", "S"],
             buttonLocation: "both",
             firstDayOfWeek: "Sunday",
             repeatableReminderCount: 3,
@@ -121,8 +121,6 @@ class Reminder {
                 onConfirm: () => {
                     this.reminderCount = 0;
                     this.updateDiscordTitle();
-                    this.acknowledgedReminders[reminder.time] = true;
-
                     this.acknowledgedReminders[reminder.id] = true;
 
                     this.reminders = this.reminders.filter(r => r.id !== reminder.id);
@@ -196,6 +194,7 @@ class Reminder {
     stop() {
         Patcher.unpatchAll("Reminder");
         clearInterval(this.checkInterval);
+        document.querySelector(".reminder-container")?.remove();
         document.querySelector(".reminder-button")?.parentElement?.remove();
         document.querySelector(".reminderInboxIcon")?.remove();
         this.reminderCount = 0;
@@ -221,6 +220,7 @@ class Reminder {
             margin: "10px",
             gap: "10px"
         });
+        containerDiv.className = "reminder-container";
 
         const buttonContainer = document.createElement("div");
         Object.assign(buttonContainer.style, {
@@ -253,7 +253,7 @@ class Reminder {
                 outline: "none",
                 border: "none",
                 padding: "10px",
-                color: "var(--text-default)",
+                color: "var(--icon-strong)",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -262,7 +262,7 @@ class Reminder {
             scheduleButton.className = "schedule-manager-button";
             scheduleButton.onclick = () => this.openScheduleManager();
             scheduleButton.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="var(--icon-strong)" viewBox="0 0 24 24">
                     <path d="M19 4h-1V3c0-.55-.45-1-1-1s-1 .45-1 1v1H8V3c0-.55-.45-1-1-1s-1 .45-1 1v1H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM9 14H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm-8 4H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2z"/>
                 </svg>
             `;
@@ -381,7 +381,7 @@ class Reminder {
 
         const path = document.createElementNS(SVG_NS, "path");
         path.setAttribute("d", "M5.024 3.783A1 1 0 0 1 6 3h12a1 1 0 0 1 .976.783L20.802 12h-4.244a1.99 1.99 0 0 0-1.824 1.205 2.978 2.978 0 0 1-5.468 0A1.991 1.991 0 0 0 7.442 12H3.198l1.826-8.217ZM3 14v5a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5h-4.43a4.978 4.978 0 0 1-9.14 0H3Z");
-        path.setAttribute("fill", "var(--text-default)");
+        path.setAttribute("fill", "var(--icon-strong)");
         
         button.appendChild(contentDiv);
         contentDiv.appendChild(iconDiv);
@@ -398,6 +398,7 @@ class Reminder {
     
 
     refreshReminderButtons() {
+        document.querySelector(".reminder-container")?.remove();
         document.querySelector(".reminder-button")?.parentElement?.remove();
         document.querySelector(".reminderInboxIcon")?.remove();
 
@@ -542,6 +543,14 @@ class Reminder {
                     },
                         React.createElement("strong", null, "Reminder Date:"),
                         " Schedule reminders for a specific date! Set the date you want, and your reminder will trigger at the selected time."
+                    ),
+                    React.createElement("li", {
+                        style: {
+                            marginBottom: "10px"
+                        }
+                    },
+                        React.createElement("strong", null, "Loop Reminder:"),
+                        ` Lets you create reminders that automatically repeat forever at a fixed interval (every X minutes or every X hours). The next reminder is scheduled from the moment the current one triggers. Unlike the "Repeatable Reminder" feature (which only repeats a few times at 5-minute intervals), loop reminders continue indefinitely until manually deleted from the inbox.`
                     ),
                     React.createElement("li", {
                         style: {
@@ -819,6 +828,8 @@ class Reminder {
 
         const selectedDayRef = { current: "" };
         const selectedDateRef = { current: "" };
+        const recurringIntervalRef = { current: "" };
+        const recurringUnitRef = { current: "" };
 
         const ModalContent = () => {
             const [reminderText, setReminderText] = React.useState("");
@@ -826,6 +837,8 @@ class Reminder {
             const [repeatable, setRepeatable] = React.useState(false);
             const [selectedDay, setSelectedDay] = React.useState("");
             const [selectedDate, setSelectedDate] = React.useState("");
+            const [recurringInterval, setRecurringInterval] = React.useState("");
+            const [recurringUnit, setRecurringUnit] = React.useState("");
 
             const selectDay = (day) => {
                 if (selectedDay === day) {
@@ -846,6 +859,12 @@ class Reminder {
             React.useEffect(() => {
                 selectedDateRef.current = selectedDate;
             }, [selectedDate]);
+            React.useEffect(() => {
+                recurringIntervalRef.current = recurringInterval;
+            }, [recurringInterval]);
+            React.useEffect(() => {
+                recurringUnitRef.current = recurringUnit;
+            }, [recurringUnit]);
 
             const baseDays = this.Days;
             const firstDay = this.settings.firstDayOfWeek || "Sunday";
@@ -1009,6 +1028,60 @@ class Reminder {
                             color: "var(--text-default)",
                             marginBottom: "5px"
                         }
+                    }, "Loop Reminder (Optional)"),
+                    React.createElement("div", {
+                        style: {
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px"
+                        }
+                    },
+                        React.createElement("span", {
+                            style: {
+                                color: "var(--text-default)"
+                            }
+                        }, "Every"),
+                        React.createElement("input", {
+                            type: "number",
+                            min: "1",
+                            value: recurringInterval,
+                            onChange: (e) => setRecurringInterval(e.target.value),
+                            style: {
+                                width: "60px",
+                                padding: "8px",
+                                borderRadius: "5px",
+                                border: "none",
+                                backgroundColor: "var(--background-base-lowest)",
+                                color: "var(--text-default)"
+                            }
+                        }),
+                        React.createElement("select", {
+                            value: recurringUnit,
+                            onChange: (e) => setRecurringUnit(e.target.value),
+                            style: {
+                                padding: "8px",
+                                borderRadius: "5px",
+                                border: "none",
+                                backgroundColor: "var(--background-base-lowest)",
+                                color: "var(--text-default)"
+                            }
+                        },
+                            React.createElement("option", { value: "" }, "None"),
+                            React.createElement("option", { value: "minutes" }, "Minutes"),
+                            React.createElement("option", { value: "hours" }, "Hours")
+                        )
+                    )
+                ),
+                React.createElement("div", {
+                        style: {
+                            marginBottom: "15px"
+                        }
+                    },
+                    React.createElement("h4", {
+                        style: {
+                            color: "var(--text-default)",
+                            marginBottom: "5px"
+                        }
                     }, "Repeatable Reminder"),
                     React.createElement("label", {
                             style: {
@@ -1096,13 +1169,10 @@ class Reminder {
                                 width: "16",
                                 height: "16",
                                 fill: "currentColor",
-                                viewBox: "0 0 16 16"
+                                viewBox: "0 0 24 24"
                             },
                             React.createElement("path", {
-                                d: "M8 3.5a.5.5 0 0 1 .5.5v4h3a.5.5 0 0 1 0 1H8a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5z"
-                            }),
-                            React.createElement("path", {
-                                d: "M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm0-1A7 7 0 1 1 8 1a7 7 0 0 1 0 14z"
+                                d: "M5.024 3.783A1 1 0 0 1 6 3h12a1 1 0 0 1 .976.783L20.802 12h-4.244a1.99 1.99 0 0 0-1.824 1.205 2.978 2.978 0 0 1-5.468 0A1.991 1.991 0 0 0 7.442 12H3.198l1.826-8.217ZM3 14v5a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5h-4.43a4.978 4.978 0 0 1-9.14 0H3Z"
                             })
                         ),
                         "Reminder Inbox"
@@ -1154,6 +1224,12 @@ class Reminder {
                     const repeatable = document.getElementById("repeatable").checked;
                     const selectedDay = selectedDayRef.current;
                     const selectedDate = selectedDateRef.current;
+                    const recurringInterval = parseInt(recurringIntervalRef.current) || 0;
+                    const recurringUnit = recurringUnitRef.current;
+                    let recurring = null;
+                    if (recurringInterval > 0 && recurringUnit) {
+                        recurring = { interval: recurringInterval, unit: recurringUnit };
+                    }
 
                     if (reminderText && reminderTime) {
                         const [hours, minutes] = reminderTime.split(":");
@@ -1166,7 +1242,7 @@ class Reminder {
                         if (selectedDate) {
                             const [year, month, day] = selectedDate.split("-");
                             targetDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
-                            this.addReminder(reminderText, targetDate, repeatable, [], selectedDate);
+                            this.addReminder(reminderText, targetDate, repeatable, [], selectedDate, null, recurring);
                         } else if (selectedDay) {
                             const dayIndex = this.Days.indexOf(selectedDay);
                             const currentDayIndex = targetDate.getDay();
@@ -1175,12 +1251,12 @@ class Reminder {
                                 daysUntil = 7;
                             }
                             targetDate.setDate(targetDate.getDate() + daysUntil);
-                            this.addReminder(reminderText, targetDate, repeatable, [selectedDay], null);
+                            this.addReminder(reminderText, targetDate, repeatable, [selectedDay], null, null, recurring);
                         } else if (targetDate.getTime() <= Date.now()) {
                             targetDate.setDate(targetDate.getDate() + 1);
-                            this.addReminder(reminderText, targetDate, repeatable, [], null);
+                            this.addReminder(reminderText, targetDate, repeatable, [], null, null, recurring);
                         } else {
-                            this.addReminder(reminderText, targetDate, repeatable, [], null);
+                            this.addReminder(reminderText, targetDate, repeatable, [], null, null, recurring);
                         }
                         UI.showToast("Your reminder has been set and will alert you at the specified time.", {
                             type: "success"
@@ -1195,7 +1271,7 @@ class Reminder {
         );
     }
 
-    addReminder(text, time, repeatable, days = [], date = null, schedule = null) {
+    addReminder(text, time, repeatable, days = [], date = null, schedule = null, recurring = null) {
         const reminder = {
             id: Date.now() + Math.random(),
             text,
@@ -1204,7 +1280,8 @@ class Reminder {
             repeatCount: 0,
             days,
             date,
-            schedule
+            schedule,
+            recurring
         };
         this.reminders.push(reminder);
         this.saveReminders();
@@ -1253,10 +1330,19 @@ class Reminder {
                 this.showModal(reminder);
     
                 if (reminder.repeatable && reminder.repeatCount < this.settings.repeatableReminderCount) {
-                    reminder.repeatCount += 1;
-                    reminder.time = now.getTime() + 5 * 60 * 1000;
-                    delete this.acknowledgedReminders[reminder.id];
-                    updatedReminders.push(reminder);
+                    const newReminder = {
+                        id: Date.now() + Math.random(),
+                        text: reminder.text,
+                        time: now.getTime() + 5 * 60 * 1000,
+                        repeatable: reminder.repeatable,
+                        repeatCount: reminder.repeatCount + 1,
+                        days: reminder.days,
+                        date: reminder.date,
+                        schedule: reminder.schedule,
+                        recurring: reminder.recurring
+                    };
+                    updatedReminders.push(newReminder);
+                    this.acknowledgedReminders[reminder.id] = true;
                 } else {
                     if (reminder.schedule) {
                         const schedule = reminder.schedule;
@@ -1277,6 +1363,20 @@ class Reminder {
                             days: reminder.days,
                             date: null,
                             schedule: schedule
+                        };
+                        updatedReminders.push(newReminder);
+                    } else if (reminder.recurring) {
+                        const intervalMs = reminder.recurring.interval * (reminder.recurring.unit === "hours" ? 3600000 : 60000);
+                        const newReminder = {
+                            id: Date.now() + Math.random(),
+                            text: reminder.text,
+                            time: reminder.time + intervalMs,
+                            repeatable: reminder.repeatable,
+                            repeatCount: 0,
+                            days: reminder.days,
+                            date: reminder.date,
+                            schedule: reminder.schedule,
+                            recurring: reminder.recurring
                         };
                         updatedReminders.push(newReminder);
                     }
@@ -1454,27 +1554,76 @@ class Reminder {
                                     style: {
                                         display: "flex",
                                         alignItems: "center",
-                                        gap: "8px"
+                                        gap: "8px",
+                                        flexWrap: "wrap"
                                     }
                                 },
-                                    React.createElement("svg", {
-                                        xmlns: "http://www.w3.org/2000/svg",
-                                        width: "16",
-                                        height: "16",
-                                        fill: "var(--text-muted)",
-                                        viewBox: "0 0 24 24"
-                                    },
-                                        React.createElement("path", {
-                                            d: "M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Zm6.962 4.856a1.475 1.475 0 0 1 1.484.066A1 1 0 1 0 11.53 9.24a3.475 3.475 0 1 0-.187 5.955 1 1 0 1 0-.976-1.746 1.474 1.474 0 1 1-1.405-2.593Zm6.186 0a1.475 1.475 0 0 1 1.484.066 1 1 0 1 0 1.084-1.682 3.475 3.475 0 1 0-.187 5.955 1 1 0 1 0-.976-1.746 1.474 1.474 0 1 1-1.405-2.593Z"
-                                        })
-                                    ),
-                                    React.createElement("span", {
+                                
+                                    React.createElement("div", {
                                         style: {
-                                            color: "var(--text-default)",
-                                            fontSize: "16px",
-                                            fontWeight: "500"
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: "8px"
                                         }
-                                    }, reminder.schedule ? `[Schedule] ${reminder.text}` : reminder.text)
+                                    },
+                                        React.createElement("svg", {
+                                            xmlns: "http://www.w3.org/2000/svg",
+                                            width: "16",
+                                            height: "16",
+                                            fill: "var(--text-muted)",
+                                            viewBox: "0 0 24 24"
+                                        },
+                                            React.createElement("path", {
+                                                d: "M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Zm6.962 4.856a1.475 1.475 0 0 1 1.484.066A1 1 0 1 0 11.53 9.24a3.475 3.475 0 1 0-.187 5.955 1 1 0 1 0-.976-1.746 1.474 1.474 0 1 1-1.405-2.593Zm6.186 0a1.475 1.475 0 0 1 1.484.066 1 1 0 1 0 1.084-1.682 3.475 3.475 0 1 0-.187 5.955 1 1 0 1 0-.976-1.746 1.474 1.474 0 1 1-1.405-2.593Z"
+                                            })
+                                        ),
+                                        React.createElement("span", {
+                                            style: {
+                                                color: "var(--text-default)",
+                                                fontSize: "16px",
+                                                fontWeight: "500"
+                                            }
+                                        }, reminder.text)
+                                    ),
+
+                                    reminder.schedule && React.createElement("span", {
+                                        style: {
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: "4px",
+                                            background: "var(--border-subtle)",
+                                            padding: "2px 8px",
+                                            borderRadius: "12px",
+                                            fontSize: "12px",
+                                            color: "var(--text-muted)"
+                                        }
+                                    }, "Schedule"),
+
+                                    reminder.recurring && React.createElement("span", {
+                                        style: {
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: "4px",
+                                            background: "var(--border-subtle)",
+                                            padding: "2px 6px",
+                                            borderRadius: "4px",
+                                            fontSize: "12px",
+                                            color: "var(--text-muted)"
+                                        }
+                                    },
+                                        React.createElement("svg", {
+                                            xmlns: "http://www.w3.org/2000/svg",
+                                            width: "12",
+                                            height: "12",
+                                            fill: "var(--text-muted)",
+                                            viewBox: "0 0 24 24"
+                                        },
+                                            React.createElement("path", {
+                                                d: "M17.133 12.632v-1.8a5.406 5.406 0 0 0-4.154-5.262.955.955 0 0 0 .021-.106V3.1a1 1 0 0 0-2 0v2.364a.955.955 0 0 0 .021.106 5.406 5.406 0 0 0-4.154 5.262v1.8C6.867 15.018 5 15.614 5 16.807 5 17.4 5 18 5.538 18h12.924C19 18 19 17.4 19 16.807c0-1.193-1.867-1.789-1.867-4.175ZM8.823 19a3.453 3.453 0 0 0 6.354 0H8.823Z"
+                                            })
+                                        ),
+                                        `Recurring every ${reminder.recurring.interval} ${reminder.recurring.unit}`
+                                    ),
                                 ),
                                 React.createElement("div", {
                                     style: {
@@ -1527,7 +1676,7 @@ class Reminder {
                                                 d: "M17.133 12.632v-1.8a5.406 5.406 0 0 0-4.154-5.262.955.955 0 0 0 .021-.106V3.1a1 1 0 0 0-2 0v2.364a.955.955 0 0 0 .021.106 5.406 5.406 0 0 0-4.154 5.262v1.8C6.867 15.018 5 15.614 5 16.807 5 17.4 5 18 5.538 18h12.924C19 18 19 17.4 19 16.807c0-1.193-1.867-1.789-1.867-4.175ZM8.823 19a3.453 3.453 0 0 0 6.354 0H8.823Z"
                                             })
                                         ),
-                                        `Repeats: ${(reminder.repeatCount ?? 1) - 1}/${this.settings.repeatableReminderCount}`
+                                        `Repeats: ${(reminder.repeatCount ?? 1)}/${this.settings.repeatableReminderCount}`
                                     )
                                 )
                             ),
@@ -1610,45 +1759,13 @@ class Reminder {
     showChangelog() {
         const changes = [
             {
-                title: "Version 1.5.4",
-                type: "fixed",
-                items: [
-                    "⚙️ **Reminder Inbox Icon:** Fixed the Reminder Inbox icon not appearing in the user panel.",
-                    "🎨 **Color Display Fix:** Resolved an issue where UI colors were not appearing correctly."
-                ]
-            },
-            {
-                title: "Version 1.5.3",
-                type: "fixed",
-                items: [
-                    "⚙️ **Plugin Startup Issue:** Fixed a problem that prevented the plugin from starting.",
-                    "🎨 **Color Display Fix:** Resolved an issue where UI colors were not appearing correctly."
-                ]
-            },
-            {
-                title: "Version 1.5.2",
-                type: "fixed",
-                items: [
-                    "🎨 **Color Display Fix:** Resolved an issue where UI colors were not appearing correctly."
-                ]
-            },
-            {
-                title: "Version 1.5.1",
+                title: "Major Update - v1.6.0",
                 type: "added",
                 items: [
-                    "⌨️ **Shortcut Option:** Added an option in \"Advanced Settings\" to enable or disable keyboard shortcuts. (Suggested by SomeLadOnTheNet & Vaelek on GitHub)"
-                ]
-            },
-            {
-                title: "Major Update - Version 1.5",
-                type: "added",
-                items: [
-                    "✨ **Schedule Manager:** Schedule Manager allows you to create recurring reminders with flexible, customizable scheduling options. Learn more in the **Reminder Guide**. (Suggested on GitHub by a now deleted user)",
-                    "✨ **Reminder Date:** You can now set reminders for a specific date using a calendar input. Only one of \"Reminder Day\" or \"Reminder Date\" can be selected at a time. (Suggested by TirOFlanc on GitHub)",
-                    "🔘 **Schedule Manager Button:** Added a calendar icon next to the \"Add Reminder\" button to open the Schedule Manager modal. (Can be hidden in settings)",
-                    "⌨️ **New Shortcuts:** Added two new shortcuts: Reminder Inbox (Shift+I) and Schedule Manager (Shift+S). (Customizable in settings)",
-                    "🖱️ **Day Toggle:** Clicking an already selected day now toggles it off.",
-                    "⚙️ **New Settings Options:** 1. \"Show Schedule Manager Button\" (UI Settings), 2. \"Reminder Inbox Shortcut\" (Advanced Settings), 3. \"Schedule Manager Shortcut\" (Advanced Settings)"
+                    "🔔 **Loop Reminder:** Lets you create reminders that automatically repeat forever at a fixed interval (every X minutes or every X hours). The next reminder is scheduled from the moment the current one triggers. Unlike the \"Repeatable Reminder\" feature (which only repeats a few times at 5-minute intervals), loop reminders continue indefinitely until manually deleted from the inbox. (Suggested by [@zrodevkaan](https://betterdiscord.app/developer/Arven))",
+                    "🖌️ **Minor UI Improvements:**  Added a \"Schedule\" badge next to scheduled reminders in the Reminder Inbox, instead of showing it in the schedule title. Updated the colors of the Schedule Manager and Reminder Inbox icons. Changed Reminder Inbox icon inside the Reminder modal.",
+                    "👾 **Repeatable Reminder Fix:** Fixed an issue where repeatable reminders would get deleted after appearing once when other reminders were present.",
+                    "⌨️ **Default Shortcuts:** Changed the default shortcut modifier key from Shift to Alt. If you're an existing user, go to the settings and apply your preferred modifier for the change to take effect. (Suggested by SomeLadOnTheNet & Vaelek on GitHub)"
                 ]
             }
         ];
@@ -1816,7 +1933,7 @@ class Reminder {
                             type: "keybind",
                             id: "reminderShortcut",
                             name: "Reminder Shortcut",
-                            note: "Set your preferred shortcut to open the reminder modal (e.g., Shift+R).",
+                            note: "Set your preferred shortcut to open the reminder modal (e.g., Alt+R).",
                             value: this.settings.reminderShortcut,
                             onChange: (value) => {
                                 this.settings.reminderShortcut = value;
@@ -1827,7 +1944,7 @@ class Reminder {
                             type: "keybind",
                             id: "reminderInboxShortcut",
                             name: "Reminder Inbox Shortcut",
-                            note: "Set your preferred shortcut to open the reminder inbox (e.g., Shift+I).",
+                            note: "Set your preferred shortcut to open the reminder inbox (e.g., Alt+I).",
                             value: this.settings.reminderInboxShortcut,
                             onChange: (value) => {
                                 this.settings.reminderInboxShortcut = value;
@@ -1838,7 +1955,7 @@ class Reminder {
                             type: "keybind",
                             id: "scheduleManagerShortcut",
                             name: "Schedule Manager Shortcut",
-                            note: "Set your preferred shortcut to open the schedule manager (e.g., Shift+S).",
+                            note: "Set your preferred shortcut to open the schedule manager (e.g., Alt+S).",
                             value: this.settings.scheduleManagerShortcut,
                             onChange: (value) => {
                                 this.settings.scheduleManagerShortcut = value;
