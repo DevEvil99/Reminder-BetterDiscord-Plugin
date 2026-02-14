@@ -1,3 +1,9 @@
+## Reminder v1.6.0 - February 14, 2026
+- **Loop Reminder:** Lets you create reminders that automatically repeat forever at a fixed interval (every X minutes or every X hours). The next reminder is scheduled from the moment the current one triggers. Unlike the "Repeatable Reminder" feature (which only repeats a few times at 5-minute intervals), loop reminders continue indefinitely until manually deleted from the inbox. (Suggested by [@zrodevkaan](https://betterdiscord.app/developer/Arven))
+- **Minor UI Improvements:**  Added a "Schedule" badge next to scheduled reminders in the Reminder Inbox, instead of showing it in the schedule title. Updated the colors of the Schedule Manager and Reminder Inbox icons. Changed Reminder Inbox icon inside the Reminder modal.
+- **Repeatable Reminder Fix:** Fixed an issue where repeatable reminders would get deleted after appearing once when other reminders were present.
+- **Default Shortcuts:** Changed the default shortcut modifier key from Shift to Alt. If you're an existing user, go to the settings and apply your preferred modifier for the change to take effect. (Suggested by SomeLadOnTheNet & Vaelek on GitHub)
+
 ## Reminder v1.5.4 - February 11, 2026
 - **Reminder Inbox Icon:** Fixed the Reminder Inbox icon not appearing in the user panel.
 - **Color Display Fix:** Resolved an issue where UI colors were not appearing correctly.
