@@ -1,6 +1,6 @@
 /**
  * @name Reminder
- * @version 1.6.0
+ * @version 1.6.1
  * @description A BetterDiscord plugin that lets you create, view, and manage custom reminders and schedules with notification support.
  * @author DevEvil
  * @website https://devevil.com
@@ -14,7 +14,7 @@
 const config = {
     info: {
         name: "Reminder",
-        version: "1.6.0",
+        version: "1.6.1",
         description: "A BetterDiscord plugin that lets you create, view, and manage custom reminders and schedules with notification support.",
         authors: [{
             name: "DevEvil",
@@ -284,7 +284,7 @@ class Reminder {
         }
     
         const observer = new MutationObserver(() => {
-            const guildsNav = document.querySelector(`.${Webpack.getByKeys('unreadMentionsIndicatorBottom').itemsContainer}`);
+            const guildsNav = document.querySelector(`.${Webpack.getByKeys('tree').tree}`);
             if (!guildsNav || guildsNav.querySelector('.reminderPluginSideBtn')) return;
     
 
@@ -1758,6 +1758,13 @@ class Reminder {
 
     showChangelog() {
         const changes = [
+            {
+                title: "Bug Fix - v1.6.1",
+                type: "fixed",
+                items: [
+                    "⚙️ **Sidebar Button Fix:** Fixed an issue that prevented the sidebar button from appearing."
+                ]
+            },
             {
                 title: "Major Update - v1.6.0",
                 type: "added",
